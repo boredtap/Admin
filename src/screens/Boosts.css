@@ -1,0 +1,366 @@
+/* Boosts Page Styles */
+.boosts-page {
+    display: flex;
+    background-color: #19191A;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.main-wrapper {
+    flex-grow: 1;
+    margin-left: 176px;
+    margin-top: 96px;
+    display: flex;
+    flex-direction: column;
+}
+
+.boosts-body-frame {
+    flex-grow: 1;
+    background-color: #202022;
+    margin: 20px;
+    border-radius: 8px;
+    padding: 20px;
+    color: white;
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Header Section */
+.boosts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+/* Pagination Styles */
+.boosts-pagination {
+    display: flex;
+    gap: 20px;
+}
+
+.pagination-item {
+    font-size: 14px;
+    color: gray;
+    cursor: pointer;
+    position: relative;
+    padding-bottom: 4px;
+}
+
+.pagination-item.active {
+    color: white;
+    font-weight: bold;
+    border-bottom: 2px solid orange;
+}
+
+/* Button Styles */
+.boosts-buttons {
+    display: flex;
+    gap: 16px;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.export-btn {
+    background-color: #19191A;
+    color: white;
+}
+
+.create-btn {
+    background-color: white;
+    color: #202022;
+}
+
+.btn-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* Divider Style */
+.boosts-divider {
+    height: 0.5px;
+    background-color: #363638;
+    margin: 16px 0;
+}
+
+/* Search and Filter Section */
+.boosts-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    background-color: #19191A;
+    border-radius: 8px;
+    width: 950px;
+    height: 54px;
+    padding: 0 16px;
+    gap: 12px;
+    position: relative;
+}
+
+.search-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.search-input {
+    flex-grow: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: white;
+    font-size: 14px;
+}
+
+.filter-icon {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+/* Filter Dropdown Styles */
+.filter-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 16px;
+    width: 200px;
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.filter-section {
+    margin-bottom: 16px;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    cursor: pointer;
+    color: #19191A;
+}
+
+.filter-options {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #19191A;
+    cursor: pointer;
+}
+
+.clear-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #FF0000;
+    background: none;
+    border: none;
+    padding: 8px 0;
+    cursor: pointer;
+    width: 100%;
+    justify-content: center;
+}
+
+/* Table Styles */
+.boosts-table-header,
+.boosts-table-row {
+    display: grid;
+    grid-template-columns: 48px 1.5fr 2fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 8px;
+    padding: 12px 0;
+    align-items: center;
+}
+
+.table-heading {
+    text-align: left;
+    font-size: 14px;
+    font-weight: 500;
+    color: #AEAAAA;
+}
+
+.boosts-table-row {
+    cursor: default;
+}
+
+.boosts-table-row.selected {
+    background-color: white;
+    color: black;
+    border-radius: 8px;
+}
+
+.boosts-table-row.selected .table-cell {
+    color: black;
+}
+
+/* Radio Button Styles */
+.radio-column {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 12px;
+}
+
+.custom-radio {
+    width: 20px;
+    height: 20px;
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-radio.selected {
+    background-color: black;
+    border-color: black;
+}
+
+/* Table Cell Styles */
+.table-cell {
+    font-size: 14px;
+    color: white;
+    display: flex;
+    align-items: center;
+}
+
+/* Reward Cell Styles */
+.reward-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reward-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Action Cell Styles */
+.action-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    position: relative;
+}
+
+.dropdown-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.action-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 8px;
+    background: white;
+    width: 119px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+}
+
+.action-cell:hover .action-dropdown, 
+.action-cell:focus-within .action-dropdown {
+    display: block;
+}
+
+.action-cell.active .action-dropdown {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: black;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background-color: #f5f5f5;
+}
+
+.action-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* Footer Styles */
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    color: white;
+}
+
+.rows-per-page {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rows-per-page select {
+    background-color: #19191A;
+    color: white;
+    border: 1px solid #363638;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pagination-arrow {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 8px;
+}
+
+.page-number {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.page-number.active {
+    background-color: #6b5a43;
+    color: white;
+}
