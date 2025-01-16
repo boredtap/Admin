@@ -4,13 +4,10 @@
     justify-content: space-between;
     position: fixed;
     top: 0;
-<<<<<<< HEAD
     left: 194px; /* Starts after NavigationPanel with 20px spacing */
     right: 24px;
-=======
     left: 196px; /* Starts after NavigationPanel with 20px spacing */
     right: 0;
->>>>>>> 276fc0966a98df77bcd4a6ad8d4ededc8e50ed49
     height: 96px;
     background-color: #202022;
     color: #fff;
@@ -64,11 +61,8 @@
     display: flex;
     align-items: center;
     background-color: #19191A;
-<<<<<<< HEAD
     width: 400px;
-=======
     width: 520px;
->>>>>>> 276fc0966a98df77bcd4a6ad8d4ededc8e50ed49
     height: 48px;
     border-radius: 8px;
     padding-left: 10px; /* Add padding to create space for the icon */

@@ -7,20 +7,16 @@ const NavigationPanel = () => {
   const location = useLocation(); // To track the current active path
 
   const menuItems = [
-<<<<<<< HEAD
     { name: 'Dashboard', icon: 'logo.png', path: '/' },
-=======
-    { name: 'Dashboard', icon: 'logo.png', path: '/dashboard' },
->>>>>>> 276fc0966a98df77bcd4a6ad8d4ededc8e50ed49
     { name: 'Tasks', icon: 'task.png', path: '/tasks' },
     { name: 'Rewards', icon: 'reward.png', path: '/rewards' },
     { name: 'Challenges', icon: 'challenge.png', path: '/challenges' },
     { name: 'Clans', icon: 'clan.png', path: '/clans' },
     { name: 'Leaderboard', icon: 'leaderboard12-icon.png', path: '/leaderboard' },
-    { name: 'Invite', icon: 'invite.png', path: '/invite' },
-    { name: 'Wallet', icon: 'wallet.png', path: '/wallet' },
-    { name: 'Boost', icon: 'boostx2.png', path: '/boost' },
+    // { name: 'Invite', icon: 'invite.png', path: '/invite' },
+    { name: 'Boosts', icon: 'boostx2.png', path: '/boosts' },
     { name: 'Levels', icon: 'level.png', path: '/levels' },
+    { name: 'Security', icon: 'security.png', path: '/security' },
   ];
 
   return (
@@ -30,16 +26,18 @@ const NavigationPanel = () => {
         <span className="logo-text">BoredTap</span>
       </div>
       <div className="menu">
-        {menuItems.map((item, index) => (
-          <div
-            key={index}
-            className={`menu-item ${location.pathname === item.path ? 'active' : ''}`}
-            onClick={() => navigate(item.path)}
-          >
-            <img src={`${process.env.PUBLIC_URL}/${item.icon}`} alt={item.name} className="menu-icon" />
-            <span className="menu-text">{item.name}</span>
-          </div>
-        ))}
+        <div className="scrollable-menu">
+          {menuItems.map((item, index) => (
+            <div
+              key={index}
+              className={`menu-item ${location.pathname === item.path ? 'active' : ''}`}
+              onClick={() => navigate(item.path)}
+            >
+              <img src={`${process.env.PUBLIC_URL}/${item.icon}`} alt={item.name} className="menu-icon" />
+              <span className="menu-text">{item.name}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

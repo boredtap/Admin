@@ -1,0 +1,308 @@
+.dashboard {
+  display: flex;
+  background-color: #19191A;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Main Wrapper */
+.main-wrapper {
+  flex-grow: 1;
+  margin-left: 176px; /* Navigation panel width */
+  margin-top: 96px; /* AppBar height */
+  padding: 20px;
+  display: flex;
+}
+
+/* AppBar */
+.app-bar {
+  position: fixed;
+  top: 0;
+  left: 176px; /* Navigation panel width */
+  right: 0;
+  height: 96px;
+  z-index: 1000;
+  background-color: #202022;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  margin-right: 230px; /* Width of right panel */
+  color: white;
+}
+
+/* Overview Section */
+.overview-section {
+  margin-bottom: 24px;
+}
+
+.overview-title {
+  font-size: 16px;
+  color: orange;
+  margin-bottom: 16px;
+}
+
+.data-frames {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.data-frame {
+  flex: 1 1 calc(25% - 16px); /* 4 frames, with gap */
+  min-width: 200px;
+  background-color: #202022;
+  border-radius: 8px;
+  padding: 16px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.small-frame {
+  position: relative;
+  height: 300px; /* Fixed height */
+  width: 100%;
+  overflow: hidden; /* Prevent content from overflowing */
+}
+
+
+
+.frame-header {
+  display: flex;
+  justify-content: flex-start; /* Align icons to the left */
+  align-items: center;
+  margin-bottom: 8px; /* Space between header and content */
+}
+
+.frame-icon {
+  width: 24px;
+  height: 24px; /* Reduced icon size */
+}
+
+.frame-percentage {
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.frame-value {
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 12px;
+}
+
+.frame-title {
+  font-size: 14px;
+  color: orange;
+  margin: 0 0 8px 0; /* Space below title */
+  background-color: transparent;
+  padding: 0;
+  height: auto; /* Reset height */
+}
+
+/* Recent Activities Section */
+.recent-activities.big-frame {
+  margin-bottom: 24px; /* Space between sections */
+  background-color: #202022;
+  border-radius: 8px;
+  padding: 16px;
+  height: 500px; /* Fixed height */
+}
+
+.section-title {
+  position: absolute;
+  top: 0;
+  left: 16px;
+  background-color: #202022;
+  padding: 4px 8px;
+  z-index: 10; /* Place above the frame's content */
+  border-radius: 8px 8px 0 0; /* Rounded top corners only */
+}
+
+.recent-activities-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.pagination,
+.time-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination span,
+.time-filters span {
+  font-size: 12px;
+  cursor: pointer;
+  color: white;
+}
+
+.pagination .active,
+.time-filters .active {
+  border-bottom: 2px solid orange;
+  font-weight: bold;
+}
+
+.pagination .inactive,
+.time-filters .inactive {
+  color: gray;
+}
+
+.separator {
+  color: gray;
+  font-weight: bold;
+  margin: 0 8px;
+}
+
+.graph-container .small-frame canvas{
+  height: 100%; /* Adjust based on your needs */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* User Level and Wallet Connection Section */
+.user-level-wallet-section {
+  display: flex;
+  position: relative;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.user-level-frame {
+  flex-grow: 2; /* Larger frame for User Level */
+  background-color: #202022;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 300px; /* Adjust based on your needs */
+}
+
+.wallet-connection-frame {
+  flex-grow: 1; /* Smaller frame for Wallet Connection */
+  background-color: #202022;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 300px; /* Adjust based on your needs */
+}
+
+/* Right Panel */
+.right-panel {
+  width: 230px;
+  background-color: #202022;
+  padding: 20px;
+  position: fixed;
+  right: 0;
+  top: 96px; /* Align with AppBar */
+  bottom: 0;
+  overflow-y: auto;
+}
+
+.new-users, .leaderboard {
+  margin-bottom: 24px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.panel-title {
+  font-size: 16px;
+  color: orange;
+}
+
+.panel-action {
+  font-size: 10px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.see-all-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.panel-frame {
+  background-color: #333;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.user-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.profile-picture {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.username {
+  font-size: 14px;
+  color: white;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 1200px) {
+  .user-level-wallet-section {
+    flex-direction: column;
+  }
+  
+  .user-level-frame, .wallet-connection-frame {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .main-wrapper {
+    margin-left: 0;
+    padding-top: 64px; /* Adjust for smaller screens */
+  }
+  
+  .main-content {
+    margin-right: 0;
+  }
+  
+  .right-panel {
+    position: relative;
+    width: 100%;
+    height: auto;
+    top: 0;
+    padding: 10px;
+  }
+  
+  .data-frames {
+    flex-direction: column;
+  }
+  
+  .data-frame {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}

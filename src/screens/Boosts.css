@@ -1,20 +1,20 @@
-/* Challenges Page Styles */
-.challenges-page {
+/* Boosts Page Styles */
+.boosts-page {
     display: flex;
     background-color: #19191A;
     min-height: 100vh;
     width: 100%;
-  }
-  
-  .main-wrapper {
+}
+
+.main-wrapper {
     flex-grow: 1;
     margin-left: 176px;
     margin-top: 96px;
     display: flex;
     flex-direction: column;
-  }
-  
-  .challenges-body-frame {
+}
+
+.boosts-body-frame {
     flex-grow: 1;
     background-color: #202022;
     margin: 20px;
@@ -22,43 +22,43 @@
     padding: 20px;
     color: white;
     border: 0.5px solid rgba(255, 255, 255, 0.2);
-  }
-  
-  /* Header Section */
-  .challenges-header {
+}
+
+/* Header Section */
+.boosts-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
-  }
-  
-  /* Pagination Styles */
-  .challenges-pagination {
+}
+
+/* Pagination Styles */
+.boosts-pagination {
     display: flex;
     gap: 20px;
-  }
-  
-  .pagination-item {
+}
+
+.pagination-item {
     font-size: 14px;
     color: gray;
     cursor: pointer;
     position: relative;
     padding-bottom: 4px;
-  }
-  
-  .pagination-item.active {
+}
+
+.pagination-item.active {
     color: white;
     font-weight: bold;
     border-bottom: 2px solid orange;
-  }
-  
-  /* Button Styles */
-  .challenges-buttons {
+}
+
+/* Button Styles */
+.boosts-buttons {
     display: flex;
     gap: 16px;
-  }
-  
-  .btn {
+}
+
+.btn {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -68,39 +68,39 @@
     border: none;
     border-radius: 8px;
     cursor: pointer;
-  }
-  
-  .export-btn {
+}
+
+.export-btn {
     background-color: #19191A;
     color: white;
-  }
-  
-  .create-btn {
+}
+
+.create-btn {
     background-color: white;
     color: #202022;
-  }
-  
-  .btn-icon {
+}
+
+.btn-icon {
     width: 16px;
     height: 16px;
-  }
-  
-  /* Divider Style */
-  .challenges-divider {
+}
+
+/* Divider Style */
+.boosts-divider {
     height: 0.5px;
     background-color: #363638;
     margin: 16px 0;
-  }
-  
-  /* Search and Filter Section */
-  .challenges-toolbar {
+}
+
+/* Search and Filter Section */
+.boosts-toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
-  }
-  
-  .search-bar {
+}
+
+.search-bar {
     display: flex;
     align-items: center;
     background-color: #19191A;
@@ -110,30 +110,30 @@
     padding: 0 16px;
     gap: 12px;
     position: relative;
-  }
-  
-  .search-icon {
+}
+
+.search-icon {
     width: 20px;
     height: 20px;
-  }
-  
-  .search-input {
+}
+
+.search-input {
     flex-grow: 1;
     background: none;
     border: none;
     outline: none;
     color: white;
     font-size: 14px;
-  }
-  
-  .filter-icon {
+}
+
+.filter-icon {
     width: 20px;
     height: 20px;
     cursor: pointer;
-  }
-  
-  /* Filter Dropdown Styles */
-  .filter-dropdown {
+}
+
+/* Filter Dropdown Styles */
+.filter-dropdown {
     position: absolute;
     top: calc(100% + 8px);
     right: 16px;
@@ -143,37 +143,37 @@
     padding: 16px;
     z-index: 1000;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-  
-  .filter-section {
+}
+
+.filter-section {
     margin-bottom: 16px;
-  }
-  
-  .filter-header {
+}
+
+.filter-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 8px 0;
     cursor: pointer;
     color: #19191A;
-  }
-  
-  .filter-options {
+}
+
+.filter-options {
     margin-top: 8px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-  }
-  
-  .filter-option {
+}
+
+.filter-option {
     display: flex;
     align-items: center;
     gap: 8px;
     color: #19191A;
     cursor: pointer;
-  }
-  
-  .clear-filters {
+}
+
+.clear-filters {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -184,288 +184,183 @@
     cursor: pointer;
     width: 100%;
     justify-content: center;
-  }
-  
-  /* Table Styles */
-  .challenges-table-header,
-  .challenges-table-row {
+}
+
+/* Table Styles */
+.boosts-table-header,
+.boosts-table-row {
     display: grid;
     grid-template-columns: 48px 1.5fr 2fr 1fr 1fr 1fr 1fr 1fr;
     gap: 8px;
     padding: 12px 0;
     align-items: center;
-  }
-  
-  .table-heading {
+}
+
+.table-heading {
     text-align: left;
     font-size: 14px;
     font-weight: 500;
     color: #AEAAAA;
-  }
-  
-  .challenges-table-row {
+}
+
+.boosts-table-row {
     cursor: default;
-  }
-  
-  .challenges-table-row.selected {
+}
+
+.boosts-table-row.selected {
     background-color: white;
     color: black;
     border-radius: 8px;
-  }
-  
-  .challenges-table-row.selected .table-cell {
+}
+
+.boosts-table-row.selected .table-cell {
     color: black;
-  }
-  
-  /* Radio Button Styles */
-  .radio-column {
+}
+
+/* Radio Button Styles */
+.radio-column {
     display: flex;
     justify-content: center;
     align-items: center;
     padding-left: 12px;
-  }
-  
-  .custom-radio {
+}
+
+.custom-radio {
     width: 20px;
     height: 20px;
     border: 2px solid white;
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s ease;
-  }
-  
-  .custom-radio.selected {
+}
+
+.custom-radio.selected {
     background-color: black;
     border-color: black;
-  }
-  
-  /* Table Cell Styles */
-  .table-cell {
+}
+
+/* Table Cell Styles */
+.table-cell {
     font-size: 14px;
     color: white;
     display: flex;
     align-items: center;
-  }
-  
-  /* Reward Cell Styles */
-  .reward-cell {
+}
+
+/* Reward Cell Styles */
+.reward-cell {
     display: flex;
     align-items: center;
     gap: 8px;
-  }
-  
-  .reward-icon {
+}
+
+.reward-icon {
     width: 20px;
     height: 20px;
-  }
-  
-  /* Action Cell Styles */
-  .action-cell {
+}
+
+/* Action Cell Styles */
+.action-cell {
     display: flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
     position: relative;
-  }
-  
-  .dropdown-icon {
+}
+
+.dropdown-icon {
     width: 20px;
     height: 20px;
-  }
-  
-  .action-dropdown {
+}
+
+.action-dropdown {
     position: absolute;
     right: 0;
     top: 100%;
-    margin-top: 8px; /* Add some space between the cell and dropdown */
+    margin-top: 8px;
     background: white;
     width: 119px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000; /* Increase this to ensure it's above other elements */
-    display: none; /* By default, hide the dropdown */
-  }
+    z-index: 1000;
+    display: none;
+}
 
-  .action-cell:hover .action-dropdown, 
+.action-cell:hover .action-dropdown, 
 .action-cell:focus-within .action-dropdown {
-  display: block; /* Show dropdown on hover or focus */
+    display: block;
 }
 
-/* If you want the dropdown to only show when clicked */
 .action-cell.active .action-dropdown {
-  display: block;
+    display: block;
 }
-  
-  .dropdown-item {
+
+.dropdown-item {
     padding: 12px 16px;
     display: flex;
     align-items: center;
     gap: 12px;
     color: black;
     cursor: pointer;
-  }
-  
-  .dropdown-item:hover {
+}
+
+.dropdown-item:hover {
     background-color: #f5f5f5;
-  }
-  
-  .action-icon {
+}
+
+.action-icon {
     width: 16px;
     height: 16px;
-  }
-  
-  /* Date Picker Styles */
-  .date-picker-wrapper {
-    position: relative;
-  }
-  
-  .custom-date-picker {
-    width: 300px;
-    background: white;
-    border-radius: 8px;
-    padding: 16px;
-  }
-  
-  .date-picker-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    color: #19191A;
-  }
-  
-  .date-picker-header button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px 8px;
-    font-size: 16px;
-    color: #19191A;
-  }
-  
-  .weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    margin-bottom: 8px;
-  }
-  
-  .weekday {
-    text-align: center;
-    font-size: 12px;
-    color: #666;
-    padding: 4px;
-  }
-  
-  .days-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-  }
-  
-  .day {
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border-radius: 4px;
-    color: #19191A;
-  }
-  
-  .day:hover.valid-day {
-    background-color: #f0f0f0;
-  }
-  
-  .day.selected {
-    background-color: #FF9800;
-    color: white;
-  }
-  
-  .day:not(.valid-day) {
-    cursor: default;
-  }
-  
-  /* Footer Styles */
-  .table-footer {
+}
+
+/* Footer Styles */
+.table-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 16px 0;
     color: white;
-  }
-  
-  .rows-per-page {
+}
+
+.rows-per-page {
     display: flex;
     align-items: center;
     gap: 12px;
-  }
-  
-  .rows-per-page select {
+}
+
+.rows-per-page select {
     background-color: #19191A;
     color: white;
     border: 1px solid #363638;
     border-radius: 4px;
     padding: 4px 8px;
     cursor: pointer;
-  }
-  
-  .pagination-controls {
+}
+
+.pagination-controls {
     display: flex;
     align-items: center;
     gap: 16px;
-  }
-  
-  .pagination-arrow {
+}
+
+.pagination-arrow {
     width: 24px;
     height: 24px;
     cursor: pointer;
-  }
-  
-  .page-numbers {
+}
+
+.page-numbers {
     display: flex;
     gap: 8px;
-  }
-  
-  .page-number {
+}
+
+.page-number {
     cursor: pointer;
     padding: 4px 8px;
     border-radius: 4px;
-  }
-  
-  .page-number.active {
+}
+
+.page-number.active {
     background-color: #6b5a43;
     color: white;
-  }
-  
-  /* Responsive Design */
-  @media screen and (max-width: 768px) {
-    .challenges-toolbar {
-      flex-direction: column;
-      gap: 16px;
-      align-items: flex-start;
-    }
-  
-    .challenges-header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-  
-    .challenges-pagination {
-      gap: 10px;
-    }
-  
-    .challenges-buttons {
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-  
-    .search-bar {
-      width: 100%;
-    }
-  
-    .challenges-table-header,
-    .challenges-table-row {
-      grid-template-columns: 48px 1fr 1fr;
-    }
-  }
+}

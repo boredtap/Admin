@@ -8,12 +8,14 @@ const levels = [
   'Legend - Lv 10'
 ];
 
-const CreateRewardOverlay = ({ onClose }) => {
+const CreateChallengeOverlay = ({ onClose }) => { 
   const [formData, setFormData] = useState({
-    rewardTitle: '',
-    rewardAmount: '',
+    challengeName: '',
+    challengeReward: '',
+    challengeDescription: '',
     launchDate: null,
-    beneficiaryType: '',
+    challengeDuration: null,
+    participantType: '',
     selectedClans: [],
     selectedLevels: [],
     specificUsers: '',
@@ -21,9 +23,10 @@ const CreateRewardOverlay = ({ onClose }) => {
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const beneficiaryTypes = ['All Users', 'Clan(s)', 'Level(s)', 'Specific User(s)'];
-  const [beneficiaryFieldLabel, setBeneficiaryFieldLabel] = useState('');
+  const participantTypes = ['All Users', 'Clan(s)', 'Level(s)', 'Specific User(s)'];
+  const [participantFieldLabel, setParticipantFieldLabel] = useState('');
   const [showDropdown, setShowDropdown] = useState({ clans: false, levels: false });
 
   const handleInputChange = (e) => {
@@ -34,27 +37,27 @@ const CreateRewardOverlay = ({ onClose }) => {
     }));
   };
 
-  const handleBeneficiarySelection = (type) => {
+  const handleParticipantSelection = (type) => {
     setFormData(prev => ({
       ...prev,
-      beneficiaryType: type,
+      participantType: type,
       selectedClans: [],
       selectedLevels: [],
       specificUsers: ''
     }));
-    // Set the label based on the beneficiary type
+    // Set the label based on the participant type
     switch (type) {
       case 'Clan(s)':
-        setBeneficiaryFieldLabel('Clan(s)');
+        setParticipantFieldLabel('Clan(s)');
         break;
       case 'Level(s)':
-        setBeneficiaryFieldLabel('Level(s)');
+        setParticipantFieldLabel('Level(s)');
         break;
       case 'Specific User(s)':
-        setBeneficiaryFieldLabel('Specific User(s)');
+        setParticipantFieldLabel('Specific User(s)');
         break;
       default:
-        setBeneficiaryFieldLabel('');
+        setParticipantFieldLabel('');
     }
   };
 
@@ -74,11 +77,11 @@ const CreateRewardOverlay = ({ onClose }) => {
     }));
   };
 
-  const renderBeneficiaryField = () => {
-    if (!beneficiaryFieldLabel) return null;
+  const renderParticipantField = () => {
+    if (!participantFieldLabel) return null;
 
     let content;
-    switch (beneficiaryFieldLabel) {
+    switch (participantFieldLabel) {
       case 'Clan(s)':
         content = (
           <div className="multi-select-field">
@@ -151,12 +154,11 @@ const CreateRewardOverlay = ({ onClose }) => {
 
     return (
       <div className="form-field">
-        <label>{beneficiaryFieldLabel}</label>
+        <label>{participantFieldLabel}</label>
         {content}
       </div>
     );
   };
-
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -174,6 +176,97 @@ const CreateRewardOverlay = ({ onClose }) => {
       launchDate: date
     }));
     setShowDatePicker(false);
+  };
+
+  const handleTimeChange = (time) => {
+    const [hours, minutes, seconds] = time.split(':').map(Number);
+    const now = new Date();
+    const durationDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, seconds);
+    setFormData(prev => ({
+      ...prev,
+      challengeDuration: durationDate
+    }));
+    setShowTimePicker(false);
+  };
+
+  const CustomDatePicker = () => {
+    const days = getDaysInMonth(currentMonth);
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    return (
+      <div className="custom-date-picker">
+        <div className="date-picker-header">
+          <button onClick={() => changeMonth(-1)}></button>
+          <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
+          <button onClick={() => changeMonth(1)}></button>
+        </div>
+        <div className="weekdays">
+          {weekDays.map(day => (
+            <div key={day} className="weekday">{day}</div>
+          ))}
+        </div>
+        <div className="days-grid">
+          {days.map((date, index) => (
+            <div
+              key={index}
+              className={`day ${date ? 'valid-day' : ''} ${
+                formData.launchDate && date &&
+                date.toDateString() === formData.launchDate.toDateString()
+                  ? 'selected'
+                  : ''
+              }`}
+              onClick={() => date && handleDateChange(date)}
+            >
+              {date ? date.getDate() : ''}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const CustomTimePicker = () => {
+    const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+    const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+    const seconds = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+    const selectedTime = formData.challengeDuration || new Date();
+
+    return (
+      <div className="custom-time-picker" style={{ background: 'white', borderRadius: '8px', padding: '16px', zIndex: '1000' }}>
+        <div className="time-picker-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <span>Select Time</span>
+        </div>
+        <div className="time-selector" style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <select 
+            style={{ flex: 1, marginRight: '5px' }}
+            value={selectedTime.getHours().toString().padStart(2, '0')} 
+            onChange={(e) => handleTimeChange(`${e.target.value}:${selectedTime.getMinutes().toString().padStart(2, '0')}:${selectedTime.getSeconds().toString().padStart(2, '0')}`)}
+          >
+            {hours.map(h => <option key={h} value={h}>{h}</option>)}
+          </select>
+          :
+          <select 
+            style={{ flex: 1, margin: '0 5px' }}
+            value={selectedTime.getMinutes().toString().padStart(2, '0')} 
+            onChange={(e) => handleTimeChange(`${selectedTime.getHours().toString().padStart(2, '0')}:${e.target.value}:${selectedTime.getSeconds().toString().padStart(2, '0')}`)}
+          >
+            {minutes.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          :
+          <select 
+            style={{ flex: 1, marginLeft: '5px' }}
+            value={selectedTime.getSeconds().toString().padStart(2, '0')} 
+            onChange={(e) => handleTimeChange(`${selectedTime.getHours().toString().padStart(2, '0')}:${selectedTime.getMinutes().toString().padStart(2, '0')}:${e.target.value}`)}
+          >
+            {seconds.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      </div>
+    );
   };
 
   // Date picker helper functions
@@ -201,51 +294,11 @@ const CreateRewardOverlay = ({ onClose }) => {
     );
   };
 
-  const CustomDatePicker = () => {
-    const days = getDaysInMonth(currentMonth);
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
-    return (
-      <div className="custom-date-picker">
-        <div className="date-picker-header">
-          <button onClick={() => changeMonth(-1)}>&lt;</button>
-          <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
-          <button onClick={() => changeMonth(1)}>&gt;</button>
-        </div>
-        <div className="weekdays">
-          {weekDays.map(day => (
-            <div key={day} className="weekday">{day}</div>
-          ))}
-        </div>
-        <div className="days-grid">
-          {days.map((date, index) => (
-            <div
-              key={index}
-              className={`day ${date ? 'valid-day' : ''} ${
-                formData.launchDate && date &&
-                date.toDateString() === formData.launchDate.toDateString()
-                  ? 'selected'
-                  : ''
-              }`}
-              onClick={() => date && handleDateChange(date)}
-            >
-              {date ? date.getDate() : ''}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="overlay-backdrop">
       <div className="create-task-overlay">
         <div className="overlay-header">
-          <h2>Create New Reward</h2>
+          <h2>Create New Challenge</h2>
           <button className="close-button" onClick={onClose}>
             <img src={`${process.env.PUBLIC_URL}/cancel.png`} alt="Cancel" />
           </button>
@@ -253,25 +306,25 @@ const CreateRewardOverlay = ({ onClose }) => {
 
         <form onSubmit={(e) => { e.preventDefault(); console.log(formData); }}>
           <div className="form-field">
-            <label>Reward Title</label>
+            <label>Challenge Name</label>
             <input
               type="text"
-              name="rewardTitle"
-              placeholder="Enter reward title"
-              value={formData.rewardTitle}
+              name="challengeName"
+              placeholder="Enter challenge name"
+              value={formData.challengeName}
               onChange={handleInputChange}
             />
           </div>
 
           <div className="form-row">
             <div className="form-field">
-              <label>Reward</label>
+              <label>Challenge Reward</label>
               <div className="input-with-icon">
                 <input
                   type="text"
-                  name="rewardAmount"
-                  placeholder="Enter task reward"
-                  value={formData.rewardAmount}
+                  name="challengeReward"
+                  placeholder="Enter challenge reward"
+                  value={formData.challengeReward}
                   onChange={handleInputChange}
                 />
                 <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin" />
@@ -279,7 +332,20 @@ const CreateRewardOverlay = ({ onClose }) => {
             </div>
 
             <div className="form-field">
-              <label>Launch Date</label>
+              <label>Challenge Description</label>
+              <input
+                type="text"
+                name="challengeDescription"
+                placeholder="Enter challenge description"
+                value={formData.challengeDescription}
+                onChange={handleInputChange}
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-field">
+              <label>Challenge Launch Date</label>
               <div className="input-with-icon">
                 <input
                   type="text"
@@ -299,29 +365,50 @@ const CreateRewardOverlay = ({ onClose }) => {
                 )}
               </div>
             </div>
+
+            <div className="form-field">
+              <label>Challenge Duration</label>
+              <div className="input-with-icon">
+                <input
+                  type="text"
+                  placeholder="HH:MM:SS"
+                  value={formData.challengeDuration ? 
+                    `${formData.challengeDuration.getHours().toString().padStart(2, '0')}:${formData.challengeDuration.getMinutes().toString().padStart(2, '0')}:${formData.challengeDuration.getSeconds().toString().padStart(2, '0')}` 
+                    : ''
+                  }
+                  readOnly
+                />
+                <img src={`${process.env.PUBLIC_URL}/time.png`} alt="Time" onClick={() => setShowTimePicker(!showTimePicker)} />
+                {showTimePicker && (
+                  <div className="time-picker-container" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, marginTop: '4px' }}>
+                    <CustomTimePicker />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Update the form row for beneficiary selection */}
+          {/* Update the form row for participant selection */}
           <div className="form-row">
             <div className="form-field">
-              <label>Beneficiary</label>
+              <label>Challenge Participant</label>
               <select
-                name="beneficiaryType"
-                value={formData.beneficiaryType}
-                onChange={(e) => handleBeneficiarySelection(e.target.value)}
+                name="participantType"
+                value={formData.participantType}
+                onChange={(e) => handleParticipantSelection(e.target.value)}
                 className="form-select"
               >
-                <option value="">Select beneficiary type</option>
-                {beneficiaryTypes.map(type => (
+                <option value="">Select participant type</option>
+                {participantTypes.map(type => (
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
             </div>
-            {renderBeneficiaryField()}
+            {renderParticipantField()}
           </div>
 
           <div className="form-field upload-field">
-            <label>Upload Reward Image</label>
+            <label>Upload Challenge Image</label>
             <div className="upload-area">
               <img src={`${process.env.PUBLIC_URL}/upload.png`} alt="Upload" />
               <p>
@@ -349,4 +436,4 @@ const CreateRewardOverlay = ({ onClose }) => {
   );
 };
 
-export default CreateRewardOverlay;
+export default CreateChallengeOverlay;

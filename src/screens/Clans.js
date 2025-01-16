@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
-import CreateNewReward from '../components/CreateNewReward';
-import "react-datepicker/dist/react-datepicker.css"; 
-import './Rewards.css';
+// import CreateClanChallengeOverlay from '../components/CreateClanChallengeOverlay'; // Renamed
+import "react-datepicker/dist/react-datepicker.css";
+import './Clans.css'; // Assuming you rename the CSS file too
 
-const Rewards = () => {
-  // State management - keeping same structure as Tasks
+const Clans = () => {
   const [selectedRow, setSelectedRow] = useState(null);
-  const [activeTab, setActiveTab] = useState("All Rewards");
+  const [activeTab, setActiveTab] = useState("All Clans"); // Updated tab names
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -16,66 +15,64 @@ const Rewards = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-   const [showCreateNewReward, setShowCreateNewReward] = useState(false);
- 
-  
-  // Updated filters for Rewards
+  const [showCreateClanChallengeOverlay, setShowCreateClanChallengeOverlay] = useState(false); // Updated
   const [filters, setFilters] = useState({
     status: {
-      'On-going': false,
-      'Claimed': false
+      Active: false,
+      Pending: false,
+      Disband: false
     },
-    beneficiary: {
-      'All users': false,
-      'Clan': false,
-      'Level': false
+    level: {
+      'Novice-Lv 1': false,
+      'Explorer-Lv 2': false,
+      'Apprentice-Lv 3': false,
+      'Warrior-Lv 4': false,
+      'Master - Lv 5': false,
+      'Champion - Lv 6': false,
+      'Tactician- Lv 7': false,
+      'Specialist - Lv 8': false,
+      'Conqueror -Lv 9': false,
+      'Legend - Lv 10': false
     }
   });
 
-  // Sample data structure for Rewards
+  // Sample data for Clans
   const sampleData = {
-    "All Rewards": [
-      {
-        title: "Monthly BT Reward",
-        reward: "5,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "On-going",
-        claimRate: "81.14",
-      },
-      {
-        title: "Leaderboard Champ",
-        reward: "5,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "Claimed",
-        claimRate: "81.14",
-      },
-      // Add more sample data as needed
-    ],
-    "On-going Rewards": [
-      {
-        title: "Streak Master",
-        reward: "8,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "On-going",
-        claimRate: "81.14",
-      },
-    ],
-    "Claimed Rewards": [
-      {
-        title: "Leaderboard Champ",
-        reward: "7,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "Claimed",
-        claimRate: "100",
-      },
-    ],
+    "All Clans": Array(25).fill({ // Increased to 25 to simulate more pages
+      name: "TON Station",
+      creator: "Ridwan007",
+      rank: "#1",
+      coins: { icon: "coin.png", value: 67127478 },
+      creationDate: "19/12/2024",
+      status: "Active",
+    }),
+    "Active": Array(15).fill({
+      name: "Active Clan",
+      creator: "User1",
+      rank: "#2",
+      coins: { icon: "coin.png", value: 1000000 },
+      creationDate: "20/12/2024",
+      status: "Active",
+    }),
+    "Pending Approval": Array(5).fill({
+      name: "Pending Clan",
+      creator: "User2",
+      rank: "#3",
+      coins: { icon: "coin.png", value: 500000 },
+      creationDate: "21/12/2024",
+      status: "Pending",
+    }),
+    "Disband": Array(5).fill({
+      name: "Disbanded Clan",
+      creator: "User3",
+      rank: "#4",
+      coins: { icon: "coin.png", value: 100000 },
+      creationDate: "22/12/2024",
+      status: "Disband",
+    }),
   };
 
-  // Keeping the same date formatting function
+  // Rest of the component logic would remain similar, with modifications for clan context
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
     return date.toLocaleDateString('en-GB', {
@@ -85,7 +82,7 @@ const Rewards = () => {
     });
   };
 
-  // Custom date picker functions - keeping same implementation
+  // Custom date picker functions
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -104,7 +101,6 @@ const Rewards = () => {
     return days;
   };
 
-  // Event handlers - keeping same implementation
   const handleDateSelect = (date) => {
     setSelectedDate(date);
     setShowDatePicker(false);
@@ -114,7 +110,6 @@ const Rewards = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1));
   };
 
-  // Custom DatePicker component - keeping same implementation
   const CustomDatePicker = () => {
     const days = getDaysInMonth(currentMonth);
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -122,36 +117,37 @@ const Rewards = () => {
                    'July', 'August', 'September', 'October', 'November', 'December'];
 
     return (
-        <div className="custom-date-picker">
+      <div className="custom-date-picker">
         <div className="date-picker-header">
-            <button onClick={() => changeMonth(-1)}>&lt;</button>
-            <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
-            <button onClick={() => changeMonth(1)}>&gt;</button>
+          <button onClick={() => changeMonth(-1)}>&lt;</button>
+          <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
+          <button onClick={() => changeMonth(1)}>&gt;</button>
         </div>
         <div className="weekdays">
-            {weekDays.map(day => (
+          {weekDays.map(day => (
             <div key={day} className="weekday">{day}</div>
-            ))}
+          ))}
         </div>
         <div className="days-grid">
-            {days.map((date, index) => (
+          {days.map((date, index) => (
             <div
-                key={index}
-                className={`day ${date ? 'valid-day' : ''} ${
+              key={index}
+              className={`day ${date ? 'valid-day' : ''} ${
                 selectedDate && date && 
                 date.toDateString() === selectedDate.toDateString() ? 'selected' : ''
-                }`}
-                onClick={() => date && handleDateSelect(date)}
+              }`}
+              onClick={() => date && handleDateSelect(date)}
             >
-                {date ? date.getDate() : ''}
+              {date ? date.getDate() : ''}
             </div>
-            ))}
-        </div> 
+          ))}
         </div>
+      </div>
     );
-    };
+  };
 
-  // Filter handlers - modified for new filter categories
+
+
   const handleFilterClick = (event) => {
     event.stopPropagation();
     setShowFilterDropdown(!showFilterDropdown);
@@ -169,19 +165,27 @@ const Rewards = () => {
 
   const clearFilters = () => {
     setFilters({
-      status: {
-        'On-going': false,
-        'Claimed': false
-      },
-      beneficiary: {
-        'All users': false,
-        'Clan': false,
-        'Level': false
+        status: {
+            Active: false,
+            Pending: false,
+            Disband: false
+          },
+          level: {
+            'Novice-Lv 1': false,
+            'Explorer-Lv 2': false,
+            'Apprentice-Lv 3': false,
+            'Warrior-Lv 4': false,
+            'Master - Lv 5': false,
+            'Champion - Lv 6': false,
+            'Tactician- Lv 7': false,
+            'Specialist - Lv 8': false,
+            'Conqueror -Lv 9': false,
+            'Legend - Lv 10': false
       }
     });
   };
 
-  // Other handlers - keeping same implementation
+
   const handleRadioClick = (index, event) => {
     event.stopPropagation();
     setSelectedRow(index === selectedRow ? null : index);
@@ -203,60 +207,49 @@ const Rewards = () => {
     setCurrentPage(1);
   };
 
-  // Pagination calculation
+  // Calculate pagination
   const totalPages = Math.ceil(sampleData[activeTab].length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <div className="rewards-page">
+    <div className="clans-page">
       <NavigationPanel />
       <div className="main-wrapper">
-        <AppBar screenName="Rewards" />
-        <div className="rewards-body-frame">
+        <AppBar screenName="Clans" />
+        <div className="clans-body-frame">
           {/* Pagination Section */}
-          <div className="rewards-header">
-            <div className="rewards-pagination">
-              <span 
-                className={`pagination-item ${activeTab === "All Rewards" ? "active" : ""}`} 
-                onClick={() => handleTabChange("All Rewards")}
-              >
-                All Rewards
-              </span>
-              <span 
-                className={`pagination-item ${activeTab === "On-going Rewards" ? "active" : ""}`}
-                onClick={() => handleTabChange("On-going Rewards")}
-              >
-                On-going Rewards
-              </span>
-              <span 
-                className={`pagination-item ${activeTab === "Claimed Rewards" ? "active" : ""}`}
-                onClick={() => handleTabChange("Claimed Rewards")}
-              >
-                Claimed Rewards
-              </span>
+          <div className="clans-header">
+            <div className="clans-pagination">
+              {["All Clans", "Active", "Pending Approval", "Disband"].map(tab => (
+                <span 
+                  key={tab} 
+                  className={`pagination-item ${activeTab === tab ? "active" : ""}`} 
+                  onClick={() => handleTabChange(tab)}
+                >
+                  {tab}
+                </span>
+              ))}
             </div>
-            <div className="rewards-buttons">
+            <div className="clans-buttons">
               <button className="btn export-btn">
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button 
-                className="btn create-btn"
-                onClick={() => setShowCreateNewReward(true)}
-              >
-                <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Reward" className="btn-icon" />
-                New Reward
+              <button className="btn create-btn" onClick={() => setShowCreateClanChallengeOverlay(true)}>
+                <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Clan Challenge" className="btn-icon" />
+                Clan Challenge
               </button>
             </div>
           </div>
 
-          <div className="rewards-divider"></div>
+          
+          <div className="clans-divider"></div>
 
-          {/* Search and Filter Section */}
-          <div className="rewards-toolbar">
+          {/* Search Bar and Buttons */}
+          <div className="clans-toolbar">
             <div className="search-bar">
               <img src={`${process.env.PUBLIC_URL}/search.png`} alt="Search" className="search-icon" />
-              <input type="text" placeholder="Search by status, beneficiary...." className="search-input" />
+              <input type="text" placeholder="Search by type, status...." className="search-input" />
               <img 
                 src={`${process.env.PUBLIC_URL}/filter.png`} 
                 alt="Filter" 
@@ -266,7 +259,7 @@ const Rewards = () => {
               {showFilterDropdown && (
                 <div className="filter-dropdown">
                   <div className="filter-section">
-                    <div className="filter-header"onClick={() => setFilters(prev => ({ ...prev, showStatus: !prev.showStatus }))}>
+                    <div className="filter-header" onClick={() => setFilters(prev => ({ ...prev, showStatus: !prev.showStatus }))}>
                       <span>Status</span>
                       <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" />
                     </div>
@@ -286,20 +279,20 @@ const Rewards = () => {
                     )}
                   </div>
                   <div className="filter-section">
-                    <div className="filter-header"onClick={() => setFilters(prev => ({ ...prev, showBeneficiary: !prev.showBeneficiary }))}>
-                      <span>Beneficiary</span>
+                    <div className="filter-header" onClick={() => setFilters(prev => ({ ...prev, showLevel: !prev.showLevel }))}>
+                      <span>Level</span>
                       <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" />
                     </div>
-                    {filters.showBeneficiary && (
+                    {filters.showLevel && (
                       <div className="filter-options">
-                        {Object.keys(filters.beneficiary).map(beneficiary => (
-                          <label key={beneficiary} className="filter-option">
+                        {Object.keys(filters.level).map(level => (
+                          <label key={level} className="filter-option">
                             <input
                               type="checkbox"
-                              checked={filters.beneficiary[beneficiary]}
-                              onChange={() => handleFilterChange('beneficiary', beneficiary)}
+                              checked={filters.level[level]}
+                              onChange={() => handleFilterChange('level', level)}
                             />
-                            <span>{beneficiary}</span>
+                            <span>{level}</span>
                           </label>
                         ))}
                       </div>
@@ -331,70 +324,65 @@ const Rewards = () => {
       </div>
     </div>
 
-          <div className="tasks-divider"></div>
-          {/* Table Header */}
-          <div className="rewards-table-header">
-            <div className="table-heading radio-column">
-              <div className="custom-radio"></div>
-            </div>
-            <div className="table-heading">Reward Title</div>
-            <div className="table-heading">Reward</div>
-            <div className="table-heading">Beneficiary(ies)</div>
-            <div className="table-heading">Launch Date</div>
-            <div className="table-heading">Status</div>
-            <div className="table-heading">Claim Rate</div>
-            <div className="table-heading action-heading">
-              <span>Action</span>
-            </div>
-          </div>
+          <div className="clans-divider"></div>
 
-          <div className="rewards-divider"></div>
+          <div className="clans-table-header">
+            <div className="table-heading radio-column">
+                <div className="custom-radio"></div>
+            </div>
+            <div className="table-heading">Clan Name</div>
+            <div className="table-heading">Owner or Creator</div>
+            <div className="table-heading">Clan Rank</div>
+            <div className="table-heading">Total Coin</div>
+            <div className="table-heading">Creation Date</div>
+            <div className="table-heading">Status</div>
+            <div className="table-heading action-heading"> 
+                <span>Action</span>
+                {/* <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" /> */}
+            </div>
+            </div>
+
+            <div className="clans-divider"></div>
 
           {/* Table Rows */}
-          {sampleData[activeTab].map((reward, index) => (
-            <div
-              key={index}
-              className={`rewards-table-row ${selectedRow === index ? "selected" : ""}`}
-            >
-              <div className="table-cell radio-column" onClick={(e) => handleRadioClick(index, e)}>
+          {sampleData[activeTab].slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((clan, index) => (
+            <div key={index} className={`clans-table-row ${selectedRow === index ? "selected" : ""}`}>
+                <div className="table-cell radio-column" onClick={(e) => handleRadioClick(index, e)}>
                 <div className={`custom-radio ${selectedRow === index ? "selected" : ""}`}></div>
-              </div>
-              <div className="table-cell">{reward.title}</div>
-              <div className="table-cell reward-cell">
-                <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Reward" className="reward-icon" />
-                {reward.reward}
-              </div>
-              <div className="table-cell">{reward.beneficiary}</div>
-              <div className="table-cell">{reward.launchDate}</div>
-              <div className="table-cell">
-                <span className={`status-btn ${reward.status.toLowerCase()}`}>
-                  {reward.status}
+                </div>
+                <div className="table-cell">{clan.name}</div>
+                <div className="table-cell">{clan.creator}</div>
+                <div className="table-cell">{clan.rank}</div>
+                <div className="table-cell reward-cell">
+                <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin" className="reward-icon" />
+                {clan.coins.value}
+                </div>
+                <div className="table-cell">{clan.creationDate}</div>
+                <div className="table-cell">
+                <span className={`status-btn ${clan.status.toLowerCase()}`}>
+                    {clan.status}
                 </span>
-              </div>
-              <div className="table-cell claim-rate-cell">
-                {reward.claimRate}%
-                <img src={`${process.env.PUBLIC_URL}/ArrowRise.png`} alt="Increment" className="increment-icon" />
-              </div>
-              <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
+                </div>
+                <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
                 <span>Action</span>
                 <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
                 {showActionDropdown === index && (
-                  <div className="action-dropdown">
+                    <div className="action-dropdown">
                     <div className="dropdown-item">
-                      <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
-                      <span>Edit</span>
+                        <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
+                        <span>Edit</span>
                     </div>
                     <div className="dropdown-item">
-                      <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
-                      <span>Delete</span>
+                        <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
+                        <span>Delete</span>
                     </div>
-                  </div>
+                    </div>
                 )}
-              </div>
+                </div>
             </div>
-          ))}
+            ))}
 
-          <div className="rewards-divider"></div>
+    <div className="clans-divider"></div>
 
           {/* Footer with Pagination */}
           <div className="table-footer">
@@ -432,17 +420,14 @@ const Rewards = () => {
               />
             </div>
           </div>
-          
-          {/* Create new reward overlay */}
-          {showCreateNewReward && (
-            <CreateNewReward 
-              onClose={() => setShowCreateNewReward(false)}
+          {/* {showCreateTaskOverlay && (
+            <CreateTaskOverlay 
+              onClose={() => setShowCreateTaskOverlay(false)}
             />
-          )}
+          )} */}
         </div>
       </div>
     </div>
   );
 };
-
-export default Rewards;
+export default Clans;
