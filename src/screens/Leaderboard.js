@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
-import UserProfileOverlay from '../components/UserProfileOverlay';
+// import UserProfileOverlay from '../components/UserProfileOverlay';
 import "react-datepicker/dist/react-datepicker.css";
 import './Leaderboard.css';
 
@@ -15,7 +15,7 @@ const Leaderboard = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [showCreateOverlay, setShowCreateOverlay] = useState(false);
+  // const [showCreateOverlay, setShowCreateOverlay] = useState(false);
   const [filters, setFilters] = useState({
     level: {
       'Novice': false,
@@ -237,7 +237,9 @@ const Leaderboard = () => {
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button className="btn suspend-btn" onClick={() => setShowCreateOverlay(true)}>
+              <button className="btn suspend-btn" 
+                // onClick={() => setShowCreateOverlay(true)}
+                >
                 <img src={`${process.env.PUBLIC_URL}/stop.png`} alt="Suspend" className="btn-icon" />
                 Suspend
               </button>
