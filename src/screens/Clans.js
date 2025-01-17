@@ -15,7 +15,7 @@ const Clans = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [showCreateClanChallengeOverlay, setShowCreateClanChallengeOverlay] = useState(false); // Updated
+  // const [showCreateClanChallengeOverlay, setShowCreateClanChallengeOverlay] = useState(false); // Updated
   const [filters, setFilters] = useState({
     status: {
       Active: false,
@@ -250,7 +250,9 @@ const Clans = () => {
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button className="btn create-btn" onClick={() => setShowCreateClanChallengeOverlay(true)}>
+              <button className="btn create-btn" 
+                  // onClick={() => setShowCreateClanChallengeOverlay(true)}
+                >
                 <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Clan Challenge" className="btn-icon" />
                 Clan Challenge
               </button>
