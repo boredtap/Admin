@@ -6,7 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import './Clans.css'; // Assuming you rename the CSS file too
 
 const Clans = () => {
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
   const [activeTab, setActiveTab] = useState("All Clans"); // Updated tab names
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -146,8 +146,6 @@ const Clans = () => {
     );
   };
 
-
-
   const handleFilterClick = (event) => {
     event.stopPropagation();
     setShowFilterDropdown(!showFilterDropdown);
@@ -165,30 +163,35 @@ const Clans = () => {
 
   const clearFilters = () => {
     setFilters({
-        status: {
-            Active: false,
-            Pending: false,
-            Disband: false
-          },
-          level: {
-            'Novice-Lv 1': false,
-            'Explorer-Lv 2': false,
-            'Apprentice-Lv 3': false,
-            'Warrior-Lv 4': false,
-            'Master - Lv 5': false,
-            'Champion - Lv 6': false,
-            'Tactician- Lv 7': false,
-            'Specialist - Lv 8': false,
-            'Conqueror -Lv 9': false,
-            'Legend - Lv 10': false
+      status: {
+        Active: false,
+        Pending: false,
+        Disband: false
+      },
+      level: {
+        'Novice-Lv 1': false,
+        'Explorer-Lv 2': false,
+        'Apprentice-Lv 3': false,
+        'Warrior-Lv 4': false,
+        'Master - Lv 5': false,
+        'Champion - Lv 6': false,
+        'Tactician- Lv 7': false,
+        'Specialist - Lv 8': false,
+        'Conqueror -Lv 9': false,
+        'Legend - Lv 10': false
       }
     });
   };
 
-
-  const handleRadioClick = (index, event) => {
+  const handleRowClick = (index, event) => {
     event.stopPropagation();
-    setSelectedRow(index === selectedRow ? null : index);
+    setSelectedRows(prev => {
+      if (prev.includes(index)) {
+        return prev.filter(row => row !== index);
+      } else {
+        return [...prev, index];
+      }
+    });
   };
 
   const handleActionClick = (index, event) => {
@@ -198,7 +201,7 @@ const Clans = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setSelectedRow(null);
+    setSelectedRows([]);
     setShowActionDropdown(null);
   };
 
@@ -207,8 +210,20 @@ const Clans = () => {
     setCurrentPage(1);
   };
 
-  // Calculate pagination
-  const totalPages = Math.ceil(sampleData[activeTab].length / rowsPerPage);
+  const handleDelete = () => {
+    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    sampleData[activeTab] = updatedData;
+    setSelectedRows([]);
+  };
+
+  const filteredData = sampleData[activeTab].filter(clan => {
+    const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && clan.status === status);
+    const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && clan.rank.includes(level));
+    return (!Object.values(filters.status).includes(true) || statusMatch) &&
+           (!Object.values(filters.level).includes(true) || levelMatch);
+  });
+
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
@@ -242,7 +257,6 @@ const Clans = () => {
             </div>
           </div>
 
-          
           <div className="clans-divider"></div>
 
           {/* Search Bar and Buttons */}
@@ -299,36 +313,36 @@ const Clans = () => {
                     )}
                   </div>
                   <button className="clear-filters" onClick={clearFilters}>
-                    {/* <img src={`${process.env.PUBLIC_URL}/cancel.png`} alt="Clear" /> */}
                     <span>Clear selection</span>
                   </button>
                 </div>
               )}
             </div>
             <div className="toolbar-buttons">
-        <div className="date-picker-wrapper">
-          <button className="btn date-btn" onClick={() => setShowDatePicker(!showDatePicker)}>
-            <img src={`${process.env.PUBLIC_URL}/date.png`} alt="Date" className="btn-icon" />
-            {formatDate(selectedDate)}
-          </button>
-          {showDatePicker && (
-            <div className="date-picker-container">
-              <CustomDatePicker />
+              <div className="date-picker-wrapper">
+                <button className="btn date-btn" onClick={() => setShowDatePicker(!showDatePicker)}>
+                  <img src={`${process.env.PUBLIC_URL}/date.png`} alt="Date" className="btn-icon" />
+                  {formatDate(selectedDate)}
+                </button>
+                {showDatePicker && (
+                  <div className="date-picker-container">
+                    <CustomDatePicker />
+                  </div>
+                )}
+              </div>
+              <button className="btn delete-btn" onClick={handleDelete}>
+                <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
+                Delete
+              </button>
             </div>
-          )}
-        </div>
-        <button className="btn delete-btn">
-          <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
-          Delete
-        </button>
-      </div>
-    </div>
+          </div>
 
           <div className="clans-divider"></div>
 
+          {/* Table Header */}
           <div className="clans-table-header">
             <div className="table-heading radio-column">
-                <div className="custom-radio"></div>
+              <div className="custom-radio"></div>
             </div>
             <div className="table-heading">Clan Name</div>
             <div className="table-heading">Owner or Creator</div>
@@ -337,52 +351,55 @@ const Clans = () => {
             <div className="table-heading">Creation Date</div>
             <div className="table-heading">Status</div>
             <div className="table-heading action-heading"> 
-                <span>Action</span>
-                {/* <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" /> */}
+              <span>Action</span>
             </div>
-            </div>
+          </div>
 
-            <div className="clans-divider"></div>
+          <div className="clans-divider"></div>
 
           {/* Table Rows */}
-          {sampleData[activeTab].slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((clan, index) => (
-            <div key={index} className={`clans-table-row ${selectedRow === index ? "selected" : ""}`}>
-                <div className="table-cell radio-column" onClick={(e) => handleRadioClick(index, e)}>
-                <div className={`custom-radio ${selectedRow === index ? "selected" : ""}`}></div>
-                </div>
-                <div className="table-cell">{clan.name}</div>
-                <div className="table-cell">{clan.creator}</div>
-                <div className="table-cell">{clan.rank}</div>
-                <div className="table-cell reward-cell">
+          {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((clan, index) => (
+            <div
+              key={index}
+              className={`clans-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
+              onClick={(e) => handleRowClick(index, e)}
+            >
+              <div className="table-cell radio-column">
+                <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
+              </div>
+              <div className="table-cell">{clan.name}</div>
+              <div className="table-cell">{clan.creator}</div>
+              <div className="table-cell">{clan.rank}</div>
+              <div className="table-cell reward-cell">
                 <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin" className="reward-icon" />
                 {clan.coins.value}
-                </div>
-                <div className="table-cell">{clan.creationDate}</div>
-                <div className="table-cell">
+              </div>
+              <div className="table-cell">{clan.creationDate}</div>
+              <div className="table-cell">
                 <span className={`status-btn ${clan.status.toLowerCase()}`}>
-                    {clan.status}
+                  {clan.status}
                 </span>
-                </div>
-                <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
+              </div>
+              <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
                 <span>Action</span>
                 <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
                 {showActionDropdown === index && (
-                    <div className="action-dropdown">
-                    <div className="dropdown-item">
-                        <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
-                        <span>Edit</span>
+                  <div className="action-dropdown">
+                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Edit */ }}>
+                      <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
+                      <span>Edit</span>
                     </div>
-                    <div className="dropdown-item">
-                        <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
-                        <span>Delete</span>
+                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
+                      <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
+                      <span>Delete</span>
                     </div>
-                    </div>
+                  </div>
                 )}
-                </div>
+              </div>
             </div>
-            ))}
+          ))}
 
-    <div className="clans-divider"></div>
+          <div className="clans-divider"></div>
 
           {/* Footer with Pagination */}
           <div className="table-footer">
@@ -420,9 +437,9 @@ const Clans = () => {
               />
             </div>
           </div>
-          {/* {showCreateTaskOverlay && (
-            <CreateTaskOverlay 
-              onClose={() => setShowCreateTaskOverlay(false)}
+          {/* {showCreateClanChallengeOverlay && (
+            <CreateClanChallengeOverlay 
+              onClose={() => setShowCreateClanChallengeOverlay(false)}
             />
           )} */}
         </div>
@@ -430,4 +447,5 @@ const Clans = () => {
     </div>
   );
 };
+
 export default Clans;

@@ -6,8 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import './Rewards.css';
 
 const Rewards = () => {
-  // State management - keeping same structure as Tasks
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
   const [activeTab, setActiveTab] = useState("All Rewards");
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -16,10 +15,8 @@ const Rewards = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-   const [showCreateNewReward, setShowCreateNewReward] = useState(false);
- 
-  
-  // Updated filters for Rewards
+  const [showCreateNewReward, setShowCreateNewReward] = useState(false);
+
   const [filters, setFilters] = useState({
     status: {
       'On-going': false,
@@ -32,7 +29,6 @@ const Rewards = () => {
     }
   });
 
-  // Sample data structure for Rewards
   const sampleData = {
     "All Rewards": [
       {
@@ -51,7 +47,6 @@ const Rewards = () => {
         status: "Claimed",
         claimRate: "81.14",
       },
-      // Add more sample data as needed
     ],
     "On-going Rewards": [
       {
@@ -75,7 +70,6 @@ const Rewards = () => {
     ],
   };
 
-  // Keeping the same date formatting function
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
     return date.toLocaleDateString('en-GB', {
@@ -85,7 +79,6 @@ const Rewards = () => {
     });
   };
 
-  // Custom date picker functions - keeping same implementation
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -104,7 +97,6 @@ const Rewards = () => {
     return days;
   };
 
-  // Event handlers - keeping same implementation
   const handleDateSelect = (date) => {
     setSelectedDate(date);
     setShowDatePicker(false);
@@ -114,7 +106,6 @@ const Rewards = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1));
   };
 
-  // Custom DatePicker component - keeping same implementation
   const CustomDatePicker = () => {
     const days = getDaysInMonth(currentMonth);
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -122,36 +113,35 @@ const Rewards = () => {
                    'July', 'August', 'September', 'October', 'November', 'December'];
 
     return (
-        <div className="custom-date-picker">
+      <div className="custom-date-picker">
         <div className="date-picker-header">
-            <button onClick={() => changeMonth(-1)}>&lt;</button>
-            <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
-            <button onClick={() => changeMonth(1)}>&gt;</button>
+          <button onClick={() => changeMonth(-1)}>&lt;</button>
+          <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
+          <button onClick={() => changeMonth(1)}>&gt;</button>
         </div>
         <div className="weekdays">
-            {weekDays.map(day => (
+          {weekDays.map(day => (
             <div key={day} className="weekday">{day}</div>
-            ))}
+          ))}
         </div>
         <div className="days-grid">
-            {days.map((date, index) => (
+          {days.map((date, index) => (
             <div
-                key={index}
-                className={`day ${date ? 'valid-day' : ''} ${
+              key={index}
+              className={`day ${date ? 'valid-day' : ''} ${
                 selectedDate && date && 
                 date.toDateString() === selectedDate.toDateString() ? 'selected' : ''
-                }`}
-                onClick={() => date && handleDateSelect(date)}
+              }`}
+              onClick={() => date && handleDateSelect(date)}
             >
-                {date ? date.getDate() : ''}
+              {date ? date.getDate() : ''}
             </div>
-            ))}
-        </div> 
+          ))}
         </div>
+      </div>
     );
-    };
+  };
 
-  // Filter handlers - modified for new filter categories
   const handleFilterClick = (event) => {
     event.stopPropagation();
     setShowFilterDropdown(!showFilterDropdown);
@@ -181,10 +171,15 @@ const Rewards = () => {
     });
   };
 
-  // Other handlers - keeping same implementation
-  const handleRadioClick = (index, event) => {
+  const handleRowClick = (index, event) => {
     event.stopPropagation();
-    setSelectedRow(index === selectedRow ? null : index);
+    setSelectedRows(prev => {
+      if (prev.includes(index)) {
+        return prev.filter(row => row !== index);
+      } else {
+        return [...prev, index];
+      }
+    });
   };
 
   const handleActionClick = (index, event) => {
@@ -194,7 +189,7 @@ const Rewards = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setSelectedRow(null);
+    setSelectedRows([]);
     setShowActionDropdown(null);
   };
 
@@ -203,8 +198,20 @@ const Rewards = () => {
     setCurrentPage(1);
   };
 
-  // Pagination calculation
-  const totalPages = Math.ceil(sampleData[activeTab].length / rowsPerPage);
+  const handleDelete = () => {
+    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    sampleData[activeTab] = updatedData;
+    setSelectedRows([]);
+  };
+
+  const filteredData = sampleData[activeTab].filter(reward => {
+    const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && reward.status === status);
+    const beneficiaryMatch = Object.keys(filters.beneficiary).some(beneficiary => filters.beneficiary[beneficiary] && reward.beneficiary === beneficiary);
+    return (!Object.values(filters.status).includes(true) || statusMatch) &&
+           (!Object.values(filters.beneficiary).includes(true) || beneficiaryMatch);
+  });
+
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
@@ -266,7 +273,7 @@ const Rewards = () => {
               {showFilterDropdown && (
                 <div className="filter-dropdown">
                   <div className="filter-section">
-                    <div className="filter-header"onClick={() => setFilters(prev => ({ ...prev, showStatus: !prev.showStatus }))}>
+                    <div className="filter-header" onClick={() => setFilters(prev => ({ ...prev, showStatus: !prev.showStatus }))}>
                       <span>Status</span>
                       <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" />
                     </div>
@@ -286,7 +293,7 @@ const Rewards = () => {
                     )}
                   </div>
                   <div className="filter-section">
-                    <div className="filter-header"onClick={() => setFilters(prev => ({ ...prev, showBeneficiary: !prev.showBeneficiary }))}>
+                    <div className="filter-header" onClick={() => setFilters(prev => ({ ...prev, showBeneficiary: !prev.showBeneficiary }))}>
                       <span>Beneficiary</span>
                       <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" />
                     </div>
@@ -306,32 +313,32 @@ const Rewards = () => {
                     )}
                   </div>
                   <button className="clear-filters" onClick={clearFilters}>
-                    {/* <img src={`${process.env.PUBLIC_URL}/cancel.png`} alt="Clear" /> */}
                     <span>Clear selection</span>
                   </button>
                 </div>
               )}
             </div>
             <div className="toolbar-buttons">
-        <div className="date-picker-wrapper">
-          <button className="btn date-btn" onClick={() => setShowDatePicker(!showDatePicker)}>
-            <img src={`${process.env.PUBLIC_URL}/date.png`} alt="Date" className="btn-icon" />
-            {formatDate(selectedDate)}
-          </button>
-          {showDatePicker && (
-            <div className="date-picker-container">
-              <CustomDatePicker />
+              <div className="date-picker-wrapper">
+                <button className="btn date-btn" onClick={() => setShowDatePicker(!showDatePicker)}>
+                  <img src={`${process.env.PUBLIC_URL}/date.png`} alt="Date" className="btn-icon" />
+                  {formatDate(selectedDate)}
+                </button>
+                {showDatePicker && (
+                  <div className="date-picker-container">
+                    <CustomDatePicker />
+                  </div>
+                )}
+              </div>
+              <button className="btn delete-btn" onClick={handleDelete}>
+                <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
+                Delete
+              </button>
             </div>
-          )}
-        </div>
-        <button className="btn delete-btn">
-          <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
-          Delete
-        </button>
-      </div>
-    </div>
+          </div>
 
-          <div className="tasks-divider"></div>
+          <div className="rewards-divider"></div>
+
           {/* Table Header */}
           <div className="rewards-table-header">
             <div className="table-heading radio-column">
@@ -339,7 +346,7 @@ const Rewards = () => {
             </div>
             <div className="table-heading">Reward Title</div>
             <div className="table-heading">Reward</div>
-            <div className="table-heading">Beneficiary(ies)</div>
+            <div className="table-heading">Beneficiary</div>
             <div className="table-heading">Launch Date</div>
             <div className="table-heading">Status</div>
             <div className="table-heading">Claim Rate</div>
@@ -351,13 +358,14 @@ const Rewards = () => {
           <div className="rewards-divider"></div>
 
           {/* Table Rows */}
-          {sampleData[activeTab].map((reward, index) => (
+          {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((reward, index) => (
             <div
               key={index}
-              className={`rewards-table-row ${selectedRow === index ? "selected" : ""}`}
+              className={`rewards-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
+              onClick={(e) => handleRowClick(index, e)}
             >
-              <div className="table-cell radio-column" onClick={(e) => handleRadioClick(index, e)}>
-                <div className={`custom-radio ${selectedRow === index ? "selected" : ""}`}></div>
+              <div className="table-cell radio-column">
+                <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
               </div>
               <div className="table-cell">{reward.title}</div>
               <div className="table-cell reward-cell">

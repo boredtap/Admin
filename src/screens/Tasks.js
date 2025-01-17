@@ -3,11 +3,10 @@ import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import CreateTaskOverlay from '../components/CreateTaskOverlay';
 import "react-datepicker/dist/react-datepicker.css";
-
 import './Tasks.css';
 
 const Tasks = () => {
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
   const [activeTab, setActiveTab] = useState("All Tasks");
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -162,8 +161,6 @@ const Tasks = () => {
     );
   };
 
-
-
   const handleFilterClick = (event) => {
     event.stopPropagation();
     setShowFilterDropdown(!showFilterDropdown);
@@ -194,10 +191,15 @@ const Tasks = () => {
     });
   };
 
-
-  const handleRadioClick = (index, event) => {
+  const handleRowClick = (index, event) => {
     event.stopPropagation();
-    setSelectedRow(index === selectedRow ? null : index);
+    setSelectedRows(prev => {
+      if (prev.includes(index)) {
+        return prev.filter(row => row !== index);
+      } else {
+        return [...prev, index];
+      }
+    });
   };
 
   const handleActionClick = (index, event) => {
@@ -207,7 +209,7 @@ const Tasks = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setSelectedRow(null);
+    setSelectedRows([]);
     setShowActionDropdown(null);
   };
 
@@ -216,10 +218,22 @@ const Tasks = () => {
     setCurrentPage(1);
   };
 
-  // Calculate pagination
-  const totalPages = Math.ceil(sampleData[activeTab].length / rowsPerPage);
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const handleDelete = () => {
+    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    sampleData[activeTab] = updatedData;
+    setSelectedRows([]);
+  };
 
+  const filteredData = sampleData[activeTab].filter(task => {
+    const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && task.status === status);
+    const typeMatch = Object.keys(filters.type).some(type => filters.type[type] && task.type === type);
+    return (!Object.values(filters.status).includes(true) || statusMatch) &&
+           (!Object.values(filters.type).includes(true) || typeMatch);
+  });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
     <div className="tasks-page">
@@ -240,9 +254,7 @@ const Tasks = () => {
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button className="btn create-btn"
-               onClick={() => setShowCreateTaskOverlay(true)}
-               >
+              <button className="btn create-btn" onClick={() => setShowCreateTaskOverlay(true)}>
                 <img src={`${process.env.PUBLIC_URL}/create.png`} alt="Create Tasks" className="btn-icon" />
                 Create Tasks
               </button>
@@ -305,30 +317,29 @@ const Tasks = () => {
                     )}
                   </div>
                   <button className="clear-filters" onClick={clearFilters}>
-                    {/* <img src={`${process.env.PUBLIC_URL}/cancel.png`} alt="Clear" /> */}
                     <span>Clear selection</span>
                   </button>
                 </div>
               )}
             </div>
             <div className="toolbar-buttons">
-        <div className="date-picker-wrapper">
-          <button className="btn date-btn" onClick={() => setShowDatePicker(!showDatePicker)}>
-            <img src={`${process.env.PUBLIC_URL}/date.png`} alt="Date" className="btn-icon" />
-            {formatDate(selectedDate)}
-          </button>
-          {showDatePicker && (
-            <div className="date-picker-container">
-              <CustomDatePicker />
+              <div className="date-picker-wrapper">
+                <button className="btn date-btn" onClick={() => setShowDatePicker(!showDatePicker)}>
+                  <img src={`${process.env.PUBLIC_URL}/date.png`} alt="Date" className="btn-icon" />
+                  {formatDate(selectedDate)}
+                </button>
+                {showDatePicker && (
+                  <div className="date-picker-container">
+                    <CustomDatePicker />
+                  </div>
+                )}
+              </div>
+              <button className="btn delete-btn" onClick={handleDelete}>
+                <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
+                Delete
+              </button>
             </div>
-          )}
-        </div>
-        <button className="btn delete-btn">
-          <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
-          Delete
-        </button>
-      </div>
-    </div>
+          </div>
 
           <div className="tasks-divider"></div>
 
@@ -343,21 +354,20 @@ const Tasks = () => {
             <div className="table-heading">Status</div>
             <div className="table-heading">Reward</div>
             <div className="table-heading">Participants</div>
-            <div className="table-heading action-heading"> <span>Action</span>
-                {/* <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />*/}
-            </div> 
+            <div className="table-heading action-heading"> <span>Action</span></div>
           </div>
 
           <div className="tasks-divider"></div>
 
           {/* Table Rows */}
-          {sampleData[activeTab].map((task, index) => (
+          {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((task, index) => (
             <div
               key={index}
-              className={`tasks-table-row ${selectedRow === index ? "selected" : ""}`}
+              className={`tasks-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
+              onClick={(e) => handleRowClick(index, e)}
             >
-              <div className="table-cell radio-column" onClick={(e) => handleRadioClick(index, e)}>
-                <div className={`custom-radio ${selectedRow === index ? "selected" : ""}`}></div>
+              <div className="table-cell radio-column">
+                <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
               </div>
               <div className="table-cell">{task.name}</div>
               <div className="table-cell">{task.type}</div>

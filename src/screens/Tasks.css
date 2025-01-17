@@ -265,6 +265,7 @@
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  position: relative; /* Added for dropdown positioning */
 }
 
 .dropdown-icon {

@@ -6,13 +6,13 @@ import "react-datepicker/dist/react-datepicker.css";
 import './Boosts.css';
 
 const Boosts = () => {
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
   const [activeTab, setActiveTab] = useState("Extra Boosters");
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
-//   const [showCreateBoostOverlay, setShowCreateBoostOverlay] = useState(false);
+  // const [showCreateBoostOverlay, setShowCreateBoostOverlay] = useState(false);
 
   const [filters, setFilters] = useState({
     level: {
@@ -44,7 +44,7 @@ const Boosts = () => {
         condition: "Upgrade Cost",
         action: "Action"
     }),
-    };
+  };
 
   const handleFilterClick = (event) => {
     event.stopPropagation();
@@ -73,9 +73,15 @@ const Boosts = () => {
     });
   };
 
-  const handleRadioClick = (index, event) => {
+  const handleRowClick = (index, event) => {
     event.stopPropagation();
-    setSelectedRow(index === selectedRow ? null : index);
+    setSelectedRows(prev => {
+      if (prev.includes(index)) {
+        return prev.filter(row => row !== index);
+      } else {
+        return [...prev, index];
+      }
+    });
   };
 
   const handleActionClick = (index, event) => {
@@ -85,7 +91,7 @@ const Boosts = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setSelectedRow(null);
+    setSelectedRows([]);
     setShowActionDropdown(null);
   };
 
@@ -94,7 +100,18 @@ const Boosts = () => {
     setCurrentPage(1);
   };
 
-  const totalPages = Math.ceil(sampleData[activeTab].length / rowsPerPage);
+  const handleDelete = () => {
+    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    sampleData[activeTab] = updatedData;
+    setSelectedRows([]);
+  };
+
+  const filteredData = sampleData[activeTab].filter(boost => {
+    const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && boost.level.includes(level));
+    return (!Object.values(filters.level).includes(true) || levelMatch);
+  });
+
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
@@ -124,8 +141,8 @@ const Boosts = () => {
                 Export
               </button>
               <button className="btn create-btn"
-            //    onClick={() => setShowCreateBoostOverlay(true)}
-               >
+                // onClick={() => setShowCreateBoostOverlay(true)}
+              >
                 <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Boost" className="btn-icon" />
                 Booster
               </button>
@@ -170,7 +187,7 @@ const Boosts = () => {
                 </div>
               )}
             </div>
-            <button className="btn delete-btn">
+            <button className="btn delete-btn" onClick={handleDelete}>
                 <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
                 Delete
             </button>
@@ -195,13 +212,14 @@ const Boosts = () => {
 
           <div className="boosts-divider"></div>
 
-          {sampleData[activeTab].map((boost, index) => (
+          {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((boost, index) => (
             <div
               key={index} 
-              className={`boosts-table-row ${selectedRow === index ? "selected" : ""}`}
+              className={`boosts-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
+              onClick={(e) => handleRowClick(index, e)}
             >
-              <div className="table-cell radio-column" onClick={(e) => handleRadioClick(index, e)}>
-                <div className={`custom-radio ${selectedRow === index ? "selected" : ""}`}></div>
+              <div className="table-cell radio-column">
+                <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
               </div>
               <div className="table-cell">{boost.name}</div>
               <div className="table-cell">{boost.description}</div>
@@ -221,7 +239,7 @@ const Boosts = () => {
                       <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
                       <span>Edit</span>
                     </div>
-                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Delete */ }}>
+                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
                       <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
                       <span>Delete</span>
                     </div>
@@ -271,8 +289,8 @@ const Boosts = () => {
 
           {/* {showCreateBoostOverlay && (
             <CreateBoostOverlay 
-              onClose={() => setShowCreateBoostOverlay(false)} */}
-            {/* />
+              onClose={() => setShowCreateBoostOverlay(false)}
+            />
           )} */}
         </div>
       </div>

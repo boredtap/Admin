@@ -7,7 +7,7 @@ import './Challenges.css'; // We'll reuse the same CSS file since structures are
 
 const Challenges = () => {
   // State management
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
   const [activeTab, setActiveTab] = useState("Opened Challenges");
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -188,23 +188,25 @@ const Challenges = () => {
   };
 
   // Row handlers
-  const handleRadioClick = (index, event) => {
+  const handleRowClick = (index, event) => {
     event.stopPropagation();
-    setSelectedRow(index === selectedRow ? null : index);
+    setSelectedRows(prev => {
+      if (prev.includes(index)) {
+        return prev.filter(row => row !== index);
+      } else {
+        return [...prev, index];
+      }
+    });
   };
 
   const handleActionClick = (index, event) => {
     event.stopPropagation();
-    console.log('Current showActionDropdown:', showActionDropdown);
-    setShowActionDropdown(prev => {
-      console.log('New showActionDropdown:', prev === index ? null : index);
-      return prev === index ? null : index;
-    });
+    setShowActionDropdown(showActionDropdown === index ? null : index);
   };
-  
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setSelectedRow(null);
+    setSelectedRows([]);
     setShowActionDropdown(null);
   };
 
@@ -213,19 +215,32 @@ const Challenges = () => {
     setCurrentPage(1);
   };
 
+  const handleDelete = () => {
+    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    sampleData[activeTab] = updatedData;
+    setSelectedRows([]);
+  };
+
+  const filteredData = sampleData[activeTab].filter(challenge => {
+    const participantsMatch = Object.keys(filters.participants).some(participant => filters.participants[participant] && challenge.participants === participant);
+    const rewardMatch = Object.keys(filters.reward).some(reward => filters.reward[reward] && challenge.reward === reward);
+    return (!Object.values(filters.participants).includes(true) || participantsMatch) &&
+           (!Object.values(filters.reward).includes(true) || rewardMatch);
+  });
+
   // Pagination calculation
-  const totalPages = Math.ceil(sampleData[activeTab].length / rowsPerPage);
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <div className="rewards-page">
+    <div className="challenges-page">
       <NavigationPanel />
       <div className="main-wrapper">
         <AppBar screenName="Challenges" />
-        <div className="rewards-body-frame">
+        <div className="challenges-body-frame">
           {/* Pagination Section */}
-          <div className="rewards-header">
-            <div className="rewards-pagination">
+          <div className="challenges-header">
+            <div className="challenges-pagination">
               <span 
                 className={`pagination-item ${activeTab === "Opened Challenges" ? "active" : ""}`}
                 onClick={() => handleTabChange("Opened Challenges")}
@@ -239,24 +254,22 @@ const Challenges = () => {
                 Completed Challenges
               </span>
             </div>
-            <div className="rewards-buttons">
+            <div className="challenges-buttons">
               <button className="btn export-btn">
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button className="btn create-btn"
-               onClick={() => setShowCreateChallengeOverlay(true)}
-               >
+              <button className="btn create-btn" onClick={() => setShowCreateChallengeOverlay(true)}>
                 <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Challenge" className="btn-icon" />
                 New Challenge
               </button>
             </div>
           </div>
 
-          <div className="rewards-divider"></div>
+          <div className="challenges-divider"></div>
 
           {/* Search and Filter Section */}
-          <div className="rewards-toolbar">
+          <div className="challenges-toolbar">
             <div className="search-bar">
               <img src={`${process.env.PUBLIC_URL}/search.png`} alt="Search" className="search-icon" />
               <input type="text" placeholder="Search challenges..." className="search-input" />
@@ -269,40 +282,44 @@ const Challenges = () => {
               {showFilterDropdown && (
                 <div className="filter-dropdown">
                   <div className="filter-section">
-                    <div className="filter-header">
+                    <div className="filter-header" onClick={() => setFilters(prev => ({ ...prev, showParticipants: !prev.showParticipants }))}>
                       <span>Participants</span>
                       <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" />
                     </div>
-                    <div className="filter-options">
-                      {Object.keys(filters.participants).map(participant => (
-                        <label key={participant} className="filter-option">
-                          <input
-                            type="checkbox"
-                            checked={filters.participants[participant]}
-                            onChange={() => handleFilterChange('participants', participant)}
-                          />
-                          <span>{participant}</span>
-                        </label>
-                      ))}
-                    </div>
+                    {filters.showParticipants && (
+                      <div className="filter-options">
+                        {Object.keys(filters.participants).map(participant => (
+                          <label key={participant} className="filter-option">
+                            <input
+                              type="checkbox"
+                              checked={filters.participants[participant]}
+                              onChange={() => handleFilterChange('participants', participant)}
+                            />
+                            <span>{participant}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="filter-section">
-                    <div className="filter-header">
+                    <div className="filter-header" onClick={() => setFilters(prev => ({ ...prev, showReward: !prev.showReward }))}>
                       <span>Reward Range</span>
                       <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" />
                     </div>
-                    <div className="filter-options">
-                      {Object.keys(filters.reward).map(range => (
-                        <label key={range} className="filter-option">
-                          <input
-                            type="checkbox"
-                            checked={filters.reward[range]}
-                            onChange={() => handleFilterChange('reward', range)}
-                          />
-                          <span>{range}</span>
-                        </label>
-                      ))}
-                    </div>
+                    {filters.showReward && (
+                      <div className="filter-options">
+                        {Object.keys(filters.reward).map(range => (
+                          <label key={range} className="filter-option">
+                            <input
+                              type="checkbox"
+                              checked={filters.reward[range]}
+                              onChange={() => handleFilterChange('reward', range)}
+                            />
+                            <span>{range}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <button className="clear-filters" onClick={clearFilters}>
                     <span>Clear selection</span>
@@ -322,7 +339,7 @@ const Challenges = () => {
                   </div>
                 )}
               </div>
-              <button className="btn delete-btn">
+              <button className="btn delete-btn" onClick={handleDelete}>
                 <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
                 Delete
               </button>
@@ -344,49 +361,50 @@ const Challenges = () => {
             <div className="table-heading">Participants</div>
             <div className="table-heading action-heading">
               <span>Action</span>
-              </div>
+            </div>
           </div>
 
           <div className="challenges-divider"></div>
 
           {/* Table Rows */}
-            {sampleData[activeTab].map((challenge, index) => (
+          {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((challenge, index) => (
             <div
-                key={index} 
-                className={`challenges-table-row ${selectedRow === index ? "selected" : ""}`}
+              key={index}
+              className={`challenges-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
+              onClick={(e) => handleRowClick(index, e)}
             >
-                <div className="table-cell radio-column" onClick={(e) => handleRadioClick(index, e)}>
-                <div className={`custom-radio ${selectedRow === index ? "selected" : ""}`}></div>
-                </div>
-                <div className="table-cell">{challenge.challengeName}</div>
-                <div className="table-cell">{challenge.description}</div>
-                <div className="table-cell">{formatDate(challenge.startDate)}</div>
-                <div className="table-cell reward-cell">
+              <div className="table-cell radio-column">
+                <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
+              </div>
+              <div className="table-cell">{challenge.challengeName}</div>
+              <div className="table-cell">{challenge.description}</div>
+              <div className="table-cell">{formatDate(challenge.startDate)}</div>
+              <div className="table-cell reward-cell">
                 <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Reward" className="reward-icon" />
                 {challenge.reward}
-                </div>
-                <div className="table-cell">{challenge.remainingTime}</div>
-                <div className="table-cell">{challenge.participants}</div>
-                <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
-              <span>Action</span>
-              <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
-              {showActionDropdown === index && (
-                <div className="action-dropdown">
-                  <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Edit */ }}>
-                    <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
-                    <span>Edit</span>
+              </div>
+              <div className="table-cell">{challenge.remainingTime}</div>
+              <div className="table-cell">{challenge.participants}</div>
+              <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
+                <span>Action</span>
+                <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
+                {showActionDropdown === index && (
+                  <div className="action-dropdown">
+                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Edit */ }}>
+                      <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
+                      <span>Edit</span>
+                    </div>
+                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Delete */ }}>
+                      <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
+                      <span>Delete</span>
+                    </div>
                   </div>
-                  <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Delete */ }}>
-                    <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
-                    <span>Delete</span>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-            </div>
-            ))}
+          ))}
 
-          <div className="rewards-divider"></div>
+          <div className="challenges-divider"></div>
 
           {/* Footer with Pagination */}
           <div className="table-footer">
@@ -425,7 +443,7 @@ const Challenges = () => {
             </div>
           </div>
           
-          {/* Create new reward overlay */}
+          {/* Create new challenge overlay */}
           {showCreateChallengeOverlay && (
             <CreateChallengeOverlay 
               onClose={() => setShowCreateChallengeOverlay(false)}
@@ -438,4 +456,3 @@ const Challenges = () => {
 };
 
 export default Challenges;
-
