@@ -6,7 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import './Leaderboard.css';
 
 const Leaderboard = () => {
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
   const [activeTab, setActiveTab] = useState("All Time"); // Updated tab names
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -172,9 +172,15 @@ const Leaderboard = () => {
     });
   };
 
-  const handleRadioClick = (index, event) => {
+  const handleRowClick = (index, event) => {
     event.stopPropagation();
-    setSelectedRow(index === selectedRow ? null : index);
+    setSelectedRows(prev => {
+      if (prev.includes(index)) {
+        return prev.filter(row => row !== index);
+      } else {
+        return [...prev, index];
+      }
+    });
   };
 
   const handleActionClick = (index, event) => {
@@ -184,7 +190,7 @@ const Leaderboard = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setSelectedRow(null);
+    setSelectedRows([]);
     setShowActionDropdown(null);
   };
 
@@ -193,8 +199,19 @@ const Leaderboard = () => {
     setCurrentPage(1);
   };
 
+  const handleDelete = () => {
+    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    sampleData[activeTab] = updatedData;
+    setSelectedRows([]);
+  };
+
+  const filteredData = sampleData[activeTab].filter(user => {
+    const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && user.level === level);
+    return (!Object.values(filters.level).includes(true) || levelMatch);
+  });
+
   // Calculate pagination
-  const totalPages = Math.ceil(sampleData[activeTab].length / rowsPerPage);
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
@@ -280,7 +297,7 @@ const Leaderboard = () => {
                   </div>
                 )}
               </div>
-              <button className="btn delete-btn">
+              <button className="btn delete-btn" onClick={handleDelete}>
                 <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
                 Delete
               </button>
@@ -307,10 +324,10 @@ const Leaderboard = () => {
           <div className="leaderboard-divider"></div>
 
           {/* Table Rows */}
-          {sampleData[activeTab].slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((user, index) => (
-            <div key={index} className={`leaderboard-table-row ${selectedRow === index ? "selected" : ""}`}>
-              <div className="table-cell radio-column" onClick={(e) => handleRadioClick(index, e)}>
-                <div className={`custom-radio ${selectedRow === index ? "selected" : ""}`}></div>
+          {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((user, index) => (
+            <div key={index} className={`leaderboard-table-row ${selectedRows.includes(index) ? "selected" : ""}`} onClick={(e) => handleRowClick(index, e)}>
+              <div className="table-cell radio-column">
+                <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
               </div>
               <div className="table-cell">{user.rank}</div>
               <div className="table-cell">{user.username}</div>
@@ -327,7 +344,7 @@ const Leaderboard = () => {
                       <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
                       <span>Edit</span>
                     </div>
-                    <div className="dropdown-item">
+                    <div className="dropdown-item" onClick={handleDelete}>
                       <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
                       <span>Delete</span>
                     </div>

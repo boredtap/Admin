@@ -142,6 +142,7 @@ const Dashboard = () => {
         borderWidth: 5, // Increased border width for a thicker line
       }],
     },
+    
     options: {
       responsive: true,
       maintainAspectRatio: false,

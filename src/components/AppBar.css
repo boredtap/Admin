@@ -1,14 +1,12 @@
 .app-bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    position: fixed;
-    top: 0;
+    justify-content: space-between; /* Distribute space between the three sections */
+    position: fixed; /* Fix the AppBar to the screen */
+    top: 0; /* Stick to the top of the screen */
     left: 194px; /* Starts after NavigationPanel with 20px spacing */
-    right: 24px;
-    left: 196px; /* Starts after NavigationPanel with 20px spacing */
-    right: 0;
-    height: 96px;
+    right: 12px; /* Add space for the right section */
+    height: 96px; /* Height of the AppBar */
     background-color: #202022;
     color: #fff;
     padding: 0 20px;

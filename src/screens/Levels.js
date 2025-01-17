@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import './Levels.css';
 
 const Levels = () => {
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
   const [activeTab, setActiveTab] = useState("Levels");
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -84,9 +84,15 @@ const Levels = () => {
     }));
   };
 
-  const handleRadioClick = (index, event) => {
+  const handleRowClick = (index, event) => {
     event.stopPropagation();
-    setSelectedRow(index === selectedRow ? null : index);
+    setSelectedRows(prev => {
+      if (prev.includes(index)) {
+        return prev.filter(row => row !== index);
+      } else {
+        return [...prev, index];
+      }
+    });
   };
 
   const handleActionClick = (index, event) => {
@@ -96,7 +102,7 @@ const Levels = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setSelectedRow(null);
+    setSelectedRows([]);
     setShowActionDropdown(null);
   };
 
@@ -105,7 +111,18 @@ const Levels = () => {
     setCurrentPage(1);
   };
 
-  const totalPages = Math.ceil(sampleData[activeTab].length / rowsPerPage);
+  const handleDelete = () => {
+    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    sampleData[activeTab] = updatedData;
+    setSelectedRows([]);
+  };
+
+  const filteredData = sampleData[activeTab].filter(level => {
+    const levelMatch = Object.keys(filters.level).some(lvl => filters.level[lvl] && level.level.includes(lvl));
+    return (!Object.values(filters.level).includes(true) || levelMatch);
+  });
+
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
@@ -173,7 +190,7 @@ const Levels = () => {
                 </div>
               )}
             </div>
-            <button className="btn delete-btn">
+            <button className="btn delete-btn" onClick={handleDelete}>
               <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
               Delete
             </button>
@@ -196,13 +213,14 @@ const Levels = () => {
 
           <div className="levels-divider"></div>
 
-          {sampleData[activeTab].map((level, index) => (
+          {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((level, index) => (
             <div
               key={index} 
-              className={`levels-table-row ${selectedRow === index ? "selected" : ""}`}
+              className={`levels-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
+              onClick={(e) => handleRowClick(index, e)}
             >
-              <div className="table-cell radio-column" onClick={(e) => handleRadioClick(index, e)}>
-                <div className={`custom-radio ${selectedRow === index ? "selected" : ""}`}></div>
+              <div className="table-cell radio-column">
+                <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
               </div>
               <div className="table-cell">{level.name}</div>
               <div className="table-cell">{level.badge}</div>
@@ -220,7 +238,7 @@ const Levels = () => {
                       <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
                       <span>Edit</span>
                     </div>
-                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Delete */ }}>
+                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
                       <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
                       <span>Delete</span>
                     </div>
