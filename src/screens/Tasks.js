@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import CreateTaskOverlay from '../components/CreateTaskOverlay';
@@ -28,65 +28,20 @@ const Tasks = () => {
       'Social': false
     }
   });
+  const [tasksData, setTasksData] = useState({
+    "All Tasks": [],
+    "In-Game": [],
+    "Special": [],
+    "Social": []
+  });
 
-  const sampleData = {
-    "All Tasks": [
-      {
-        name: "Invite One (1) Friend",
-        type: "In-Game",
-        description: "Invite just 1 friend",
-        status: "Active",
-        reward: "2,000",
-        participants: "All Users",
-      },
-      {
-        name: "Complete 5 Games",
-        type: "Special",
-        description: "Play 5 games to earn rewards",
-        status: "Paused",
-        reward: "1,000",
-        participants: "Gamers Only",
-      },
-      {
-        name: "Complete 5 Games",
-        type: "Social",
-        description: "Play 5 games to earn rewards",
-        status: "Inactive",
-        reward: "4,000",
-        participants: "Specialist",
-      },
-    ],
-    "In-Game": [
-      {
-        name: "Reach Level 10",
-        type: "In-Game",
-        description: "Reach level 10",
-        status: "Active",
-        reward: "700",
-        participants: "New Players",
-      },
-    ],
-    Special: [
-      {
-        name: "Join Tournament",
-        type: "Special",
-        description: "Participate in tournaments",
-        status: "Active",
-        reward: "5,000",
-        participants: "Tournament Players",
-      },
-    ],
-    Social: [
-      {
-        name: "Share on Social Media",
-        type: "Social",
-        description: "Share this game on any platform",
-        status: "Inactive",
-        reward: "300",
-        participants: "Social Players",
-      },
-    ],
-  };
+  useEffect(() => {
+    // Fetch data from backend
+    fetch('/api/tasks-data')
+      .then(response => response.json())
+      .then(data => setTasksData(data))
+      .catch(error => console.error('Error fetching tasks data:', error));
+  }, []);
 
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
@@ -219,12 +174,15 @@ const Tasks = () => {
   };
 
   const handleDelete = () => {
-    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    sampleData[activeTab] = updatedData;
+    const updatedData = tasksData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    setTasksData(prev => ({
+      ...prev,
+      [activeTab]: updatedData
+    }));
     setSelectedRows([]);
   };
 
-  const filteredData = sampleData[activeTab].filter(task => {
+  const filteredData = tasksData[activeTab].filter(task => {
     const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && task.status === status);
     const typeMatch = Object.keys(filters.type).some(type => filters.type[type] && task.type === type);
     return (!Object.values(filters.status).includes(true) || statusMatch) &&
@@ -395,7 +353,7 @@ const Tasks = () => {
                       <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
                       <span>Delete</span>
                     </div>
-                  </div>
+                  </div> 
                 )}
               </div>
             </div>

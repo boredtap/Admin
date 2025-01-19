@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import CreateNewReward from '../components/CreateNewReward';
@@ -29,46 +29,19 @@ const Rewards = () => {
     }
   });
 
-  const sampleData = {
-    "All Rewards": [
-      {
-        title: "Monthly BT Reward",
-        reward: "5,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "On-going",
-        claimRate: "81.14",
-      },
-      {
-        title: "Leaderboard Champ",
-        reward: "5,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "Claimed",
-        claimRate: "81.14",
-      },
-    ],
-    "On-going Rewards": [
-      {
-        title: "Streak Master",
-        reward: "8,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "On-going",
-        claimRate: "81.14",
-      },
-    ],
-    "Claimed Rewards": [
-      {
-        title: "Leaderboard Champ",
-        reward: "7,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "Claimed",
-        claimRate: "100",
-      },
-    ],
-  };
+  const [rewardsData, setRewardsData] = useState({
+    "All Rewards": [],
+    "On-going Rewards": [],
+    "Claimed Rewards": []
+  });
+
+  useEffect(() => {
+    // Fetch data from backend
+    fetch('/api/rewards-data')
+      .then(response => response.json())
+      .then(data => setRewardsData(data))
+      .catch(error => console.error('Error fetching rewards data:', error));
+  }, []);
 
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
@@ -199,12 +172,15 @@ const Rewards = () => {
   };
 
   const handleDelete = () => {
-    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    sampleData[activeTab] = updatedData;
+    const updatedData = rewardsData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    setRewardsData(prev => ({
+      ...prev,
+      [activeTab]: updatedData
+    }));
     setSelectedRows([]);
   };
 
-  const filteredData = sampleData[activeTab].filter(reward => {
+  const filteredData = rewardsData[activeTab].filter(reward => {
     const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && reward.status === status);
     const beneficiaryMatch = Object.keys(filters.beneficiary).some(beneficiary => filters.beneficiary[beneficiary] && reward.beneficiary === beneficiary);
     return (!Object.values(filters.status).includes(true) || statusMatch) &&

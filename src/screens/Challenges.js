@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import CreateChallengeOverlay from '../components/CreateChallengeOverlay';
 import "react-datepicker/dist/react-datepicker.css";
-import './Challenges.css'; // We'll reuse the same CSS file since structures are similar
+import './Challenges.css';
 
 const Challenges = () => {
   // State management
@@ -32,53 +32,18 @@ const Challenges = () => {
     }
   });
 
-  // Sample data structure for Challenges
-  const sampleData = {
-    "Opened Challenges": [
-      {
-        challengeName: "Tap Marathon",
-        description: "Achieve 50,000 taps within 24hrs.",
-        startDate: new Date("2024-12-19"),
-        reward: "2,000",
-        remainingTime: "10:46:23",
-        participants: "All Users"
-      },
-      {
-        challengeName: "Daily Quest Master",
-        description: "Complete all daily quests for 7 consecutive days",
-        startDate: new Date("2024-12-20"),
-        reward: "5,000",
-        remainingTime: "23:15:45",
-        participants: "VIP Users"
-      },
-      {
-        challengeName: "Social Butterfly",
-        description: "Invite 20 friends to join the platform",
-        startDate: new Date("2024-12-21"),
-        reward: "3,500",
-        remainingTime: "15:30:00",
-        participants: "All Users"
-      }
-    ],
-    "Completed Challenges": [
-      {
-        challengeName: "Speed Runner",
-        description: "Complete 100 tasks in under 1 hour",
-        startDate: new Date("2024-12-15"),
-        reward: "4,000",
-        remainingTime: "00:00:00",
-        participants: "Selected Users"
-      },
-      {
-        challengeName: "Weekend Warrior",
-        description: "Maintain top activity for 48 hours",
-        startDate: new Date("2024-12-16"),
-        reward: "6,000",
-        remainingTime: "00:00:00",
-        participants: "All Users"
-      }
-    ]
-  };
+  // Fetch data from backend
+  const [challengesData, setChallengesData] = useState({
+    "Opened Challenges": [],
+    "Completed Challenges": []
+  });
+
+  useEffect(() => {
+    fetch('/api/challenges-data')
+      .then(response => response.json())
+      .then(data => setChallengesData(data))
+      .catch(error => console.error('Error fetching challenges data:', error));
+  }, []);
 
   // Reusing date formatting function
   const formatDate = (date) => {
@@ -216,12 +181,15 @@ const Challenges = () => {
   };
 
   const handleDelete = () => {
-    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    sampleData[activeTab] = updatedData;
+    const updatedData = challengesData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    setChallengesData(prev => ({
+      ...prev,
+      [activeTab]: updatedData
+    }));
     setSelectedRows([]);
   };
 
-  const filteredData = sampleData[activeTab].filter(challenge => {
+  const filteredData = challengesData[activeTab].filter(challenge => {
     const participantsMatch = Object.keys(filters.participants).some(participant => filters.participants[participant] && challenge.participants === participant);
     const rewardMatch = Object.keys(filters.reward).some(reward => filters.reward[reward] && challenge.reward === reward);
     return (!Object.values(filters.participants).includes(true) || participantsMatch) &&

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 // import CreateBoostOverlay from '../components/CreateBoostOverlay';
@@ -24,27 +24,18 @@ const Boosts = () => {
     }
   });
 
-  const sampleData = {
-    "Extra Boosters": Array(8).fill({ // Increased to 8 to simulate more pages
-        name: "Boost",
-        description: "Increase the amount of BT-Coin you can earn per one tap",
-        level: "Level-1",
-        effect: "+1 per tap",
-        upgradeCost: "50,000",
-        condition: "Upgrade Cost",
-        action: "Action"
-    }),
-      
-    "Streak": Array(8).fill({
-        name: "Boost",
-        description: "Increase the amount of BT-Coin you can earn per one tap",
-        level: "Level-1",
-        effect: "+1 per tap",
-        upgradeCost: "50,000",
-        condition: "Upgrade Cost",
-        action: "Action"
-    }),
-  };
+  const [boostsData, setBoostsData] = useState({
+    "Extra Boosters": [],
+    "Streak": []
+  });
+
+  useEffect(() => {
+    // Fetch data from backend
+    fetch('/api/boosts-data')
+      .then(response => response.json())
+      .then(data => setBoostsData(data))
+      .catch(error => console.error('Error fetching boosts data:', error));
+  }, []);
 
   const handleFilterClick = (event) => {
     event.stopPropagation();
@@ -101,12 +92,15 @@ const Boosts = () => {
   };
 
   const handleDelete = () => {
-    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    sampleData[activeTab] = updatedData;
+    const updatedData = boostsData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    setBoostsData(prev => ({
+      ...prev,
+      [activeTab]: updatedData
+    }));
     setSelectedRows([]);
   };
 
-  const filteredData = sampleData[activeTab].filter(boost => {
+  const filteredData = boostsData[activeTab].filter(boost => {
     const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && boost.level.includes(level));
     return (!Object.values(filters.level).includes(true) || levelMatch);
   });

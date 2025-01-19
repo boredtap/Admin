@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
-// import UserProfileOverlay from '../components/UserProfileOverlay';
 import "react-datepicker/dist/react-datepicker.css";
 import './Leaderboard.css';
 
 const Leaderboard = () => {
   const [selectedRows, setSelectedRows] = useState([]);
-  const [activeTab, setActiveTab] = useState("All Time"); // Updated tab names
+  const [activeTab, setActiveTab] = useState("All Time");
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -15,7 +14,6 @@ const Leaderboard = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  // const [showCreateOverlay, setShowCreateOverlay] = useState(false);
   const [filters, setFilters] = useState({
     level: {
       'Novice': false,
@@ -31,41 +29,20 @@ const Leaderboard = () => {
     }
   });
 
-  // Sample data for Leaderboard
-  const sampleData = {
-    "All Time": Array(25).fill({
-      rank: "#1",
-      username: "AjoseD28",
-      level: "Legend",
-      coinEarned: "7,127,478,606",
-      clan: "TON Station",
-      highestStreak: "16-12-2024"
-    }),
-    "Daily": Array(15).fill({
-      rank: "#2",
-      username: "User1",
-      level: "Master",
-      coinEarned: "1,000,000",
-      clan: "Daily Warriors",
-      highestStreak: "17-12-2024"
-    }),
-    "Weekly": Array(10).fill({
-      rank: "#3",
-      username: "User2",
-      level: "Conqueror",
-      coinEarned: "500,000",
-      clan: "Weekly Wonders",
-      highestStreak: "18-12-2024"
-    }),
-    "Monthly": Array(10).fill({
-      rank: "#4",
-      username: "User3",
-      level: "Specialist",
-      coinEarned: "100,000",
-      clan: "Monthly Masters",
-      highestStreak: "19-12-2024"
-    }),
-  };
+  const [leaderboardData, setLeaderboardData] = useState({
+    "All Time": [],
+    "Daily": [],
+    "Weekly": [],
+    "Monthly": []
+  });
+
+  useEffect(() => {
+    // Fetch data from backend
+    fetch('/api/leaderboard-data')
+      .then(response => response.json())
+      .then(data => setLeaderboardData(data))
+      .catch(error => console.error('Error fetching leaderboard data:', error));
+  }, []);
 
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
@@ -76,7 +53,6 @@ const Leaderboard = () => {
     });
   };
 
-  // Custom date picker functions
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -200,12 +176,15 @@ const Leaderboard = () => {
   };
 
   const handleDelete = () => {
-    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    sampleData[activeTab] = updatedData;
+    const updatedData = leaderboardData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    setLeaderboardData(prev => ({
+      ...prev,
+      [activeTab]: updatedData
+    }));
     setSelectedRows([]);
   };
 
-  const filteredData = sampleData[activeTab].filter(user => {
+  const filteredData = leaderboardData[activeTab].filter(user => {
     const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && user.level === level);
     return (!Object.values(filters.level).includes(true) || levelMatch);
   });
@@ -237,9 +216,7 @@ const Leaderboard = () => {
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button className="btn suspend-btn" 
-                // onClick={() => setShowCreateOverlay(true)}
-                >
+              <button className="btn suspend-btn">
                 <img src={`${process.env.PUBLIC_URL}/stop.png`} alt="Suspend" className="btn-icon" />
                 Suspend
               </button>
