@@ -405,4 +405,43 @@
         }
       ]
     }
+
+    {
+      "All Users": [
+        {
+          "name": "John Doe",
+          "level": "Novice-Lv 1",
+          "coins": { "value": 100 },
+          "inviteCount": 5,
+          "registrationDate": "01-01-2023",
+          "status": "Active"
+        },
+        {
+          "name": "Jane Smith",
+          "level": "Explorer-Lv 2",
+          "coins": { "value": 200 },
+          "inviteCount": 10,
+          "registrationDate": "02-01-2023",
+          "status": "Suspended"
+        }
+      ],
+      "Top 1000": [
+        {
+          "name": "Alice Johnson",
+          "level": "Master - Lv 5",
+          "coins": { "value": 500 },
+          "inviteCount": 50,
+          "registrationDate": "03-01-2023",
+          "status": "Active"
+        },
+        {
+          "name": "Bob Brown",
+          "level": "Champion - Lv 6",
+          "coins": { "value": 600 },
+          "inviteCount": 60,
+          "registrationDate": "04-01-2023",
+          "status": "Disband"
+        }
+      ]
+    }
   }

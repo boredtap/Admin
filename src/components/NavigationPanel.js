@@ -16,6 +16,7 @@ const NavigationPanel = () => {
     // { name: 'Invite', icon: 'invite.png', path: '/invite' },
     { name: 'Boosts', icon: 'boostx2.png', path: '/boosts' },
     { name: 'Levels', icon: 'level.png', path: '/levels' },
+    { name: 'Users', icon: 'user management.png', path: '/Users' },
     { name: 'Security', icon: 'security.png', path: '/security' },
   ];
 

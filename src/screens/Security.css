@@ -1,0 +1,205 @@
+/* Security Page */
+.security-page {
+    display: flex;
+    background-color: #19191A;
+    min-height: 100vh;
+    width: 100%;
+  }
+  
+  .main-wrapper {
+    flex-grow: 1;
+    margin-left: 176px; /* Navigation panel width */
+    margin-top: 96px; /* AppBar height */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .security-body-frame {
+    flex-grow: 1;
+    background-color: #202022;
+    margin: 20px;
+    border-radius: 8px;
+    padding: 20px;
+    color: white;
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .form-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .form-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-field label {
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  
+  .form-field input,
+  .form-field select {
+    width: 100%;
+    height: 48px;
+    background-color: #19191A;
+    border: 1px solid #363638;
+    border-radius: 8px;
+    padding: 0 8px;
+    color: white;
+    font-size: 14px;
+  }
+  
+  .form-field input::placeholder,
+  .form-field select::placeholder {
+    color: #666;
+  }
+  
+  .input-with-icon {
+    position: relative;
+  }
+  
+  .input-with-icon input,
+  .input-with-icon select {
+    padding-right: 40px; /* Add padding to ensure text does not overlap with the icon */
+  }
+  
+  .input-with-icon img {
+    position: absolute;
+    right: 12px; /* Inside the field */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+  }
+  
+  /* Custom Date Picker Styles */
+  .custom-date-picker {
+    width: 300px;
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    z-index: 1000;
+  }
+  
+  .date-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .weekdays, .days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  
+  .weekday {
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+  }
+  
+  .day {
+    text-align: center;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 8px;
+  }
+  
+  .day:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .day.selected {
+    background-color: orange;
+    color: white;
+  }
+  
+  .submit-button {
+    width: 100%;
+    height: 48px;
+    background-color: #FF0000;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 24px;
+  }
+  
+  .submit-button:hover {
+    background-color: #cc0000;
+  }
+
+  /* Overlay Styles */
+.overlay-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .overlay-content {
+    background-color: #202022;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    color: white;
+    width: 320px;
+  }
+  
+  .overlay-icon {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 16px;
+    position: center;
+  }
+  
+  .overlay-content h2 {
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 16px;
+  }
+  
+  .overlay-content p {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  
+  .overlay-submit-button {
+    width: 100%;
+    height: 48px;
+    background-color: #FF0000;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 16px;
+  }
+  
+  .overlay-submit-button:hover {
+    background-color: #cc0000;
+  }
+  
+  .overlay-back-link {
+    color: white;
+    text-decoration: underline;
+    cursor: pointer;
+  }

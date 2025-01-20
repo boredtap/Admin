@@ -8,6 +8,8 @@ import Clans from './screens/Clans';
 import Leaderboard from './screens/Leaderboard';
 import Boosts from './screens/Boosts';
 import Levels from './screens/Levels';
+import Users from './screens/Users';
+import Security from './screens/Security';
 
 const App = () => {
   return (
@@ -21,6 +23,8 @@ const App = () => {
         <Route path="/Leaderboard" element={<Leaderboard />} />
         <Route path="/Boosts" element={<Boosts />} />
         <Route path="/Levels" element={<Levels />} />
+        <Route path="/Users" element={<Users />} />
+        <Route path="/Security" element={<Security />} />
             {/* Add other routes here */}
           </Routes>
     </Router>
