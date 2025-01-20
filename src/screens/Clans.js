@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
 import './Clans.css';
 
@@ -204,6 +205,22 @@ const Clans = () => {
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
+  const handleExport = () => {
+    const dataToExport = filteredData.map(clan => ({
+      'Clan Name': clan.name,
+      'Owner or Creator': clan.creator,
+      'Clan Rank': clan.rank,
+      'Total Coin': clan.coins.value,
+      'Creation Date': clan.creationDate,
+      'Status': clan.status,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Clans');
+    XLSX.writeFile(workbook, 'clans.xlsx');
+  };
+
   return (
     <div className="clans-page">
       <NavigationPanel />
@@ -224,7 +241,7 @@ const Clans = () => {
               ))}
             </div>
             <div className="clans-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>

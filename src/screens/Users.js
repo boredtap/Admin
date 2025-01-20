@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
 import './Users.css';
 
@@ -61,16 +62,16 @@ const Users = () => {
     const month = date.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const firstDayOfMonth = new Date(year, month, 1).getDay();
-    
+
     const days = [];
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(null);
     }
-    
+
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(new Date(year, month, i));
     }
-    
+
     return days;
   };
 
@@ -192,6 +193,22 @@ const Users = () => {
     setSelectedRows([]);
   };
 
+  const handleExport = () => {
+    const dataToExport = filteredData.map(user => ({
+      'User Name': user.name,
+      'Level': user.level,
+      'Coin Earned': user.coins.value,
+      'Invite Count': user.inviteCount,
+      'Registration Date': user.registrationDate,
+      'Status': user.status,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
+    XLSX.writeFile(workbook, 'users.xlsx');
+  };
+
   const filteredData = usersData[activeTab].filter(user => {
     const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && user.status === status);
     const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && user.level.includes(level));
@@ -222,7 +239,7 @@ const Users = () => {
               ))}
             </div>
             <div className="user-management-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>

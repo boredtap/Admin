@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import CreateTaskOverlay from '../components/CreateTaskOverlay';
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
 import './Tasks.css';
 
@@ -193,6 +194,22 @@ const Tasks = () => {
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
+  const handleExport = () => {
+    const dataToExport = filteredData.map(task => ({
+      'Task Name': task.name,
+      'Task Type': task.type,
+      'Description': task.description,
+      'Status': task.status,
+      'Reward': task.reward,
+      'Participants': task.participants,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tasks');
+    XLSX.writeFile(workbook, 'tasks.xlsx');
+  };
+
   return (
     <div className="tasks-page">
       <NavigationPanel />
@@ -208,7 +225,7 @@ const Tasks = () => {
               <span className={`pagination-item ${activeTab === "Social" ? "active" : ""}`} onClick={() => handleTabChange("Social")}>Social</span>
             </div>
             <div className="tasks-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>

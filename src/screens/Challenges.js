@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import CreateChallengeOverlay from '../components/CreateChallengeOverlay';
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
 import './Challenges.css';
 
@@ -200,6 +201,22 @@ const Challenges = () => {
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
+  const handleExport = () => {
+    const dataToExport = filteredData.map(challenge => ({
+      'Challenge Name': challenge.challengeName,
+      'Description': challenge.description,
+      'Start Date': formatDate(challenge.startDate),
+      'Reward': challenge.reward,
+      'Remaining Time': challenge.remainingTime,
+      'Participants': challenge.participants,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Challenges');
+    XLSX.writeFile(workbook, 'challenges.xlsx');
+  };
+
   return (
     <div className="challenges-page">
       <NavigationPanel />
@@ -223,7 +240,7 @@ const Challenges = () => {
               </span>
             </div>
             <div className="challenges-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
 import './Levels.css';
 
@@ -107,6 +108,20 @@ const Levels = () => {
     setSelectedRows([]);
   };
 
+  const handleExport = () => {
+    const dataToExport = filteredData.map(level => ({
+      'Name': level.name,
+      'Badge': level.badge,
+      'Level': level.level,
+      'Requirement': level.requirement,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Levels');
+    XLSX.writeFile(workbook, 'levels.xlsx');
+  };
+
   const filteredData = levelsData[activeTab].filter(level => {
     const levelMatch = Object.keys(filters.level).some(lvl => filters.level[lvl] && level.level.includes(lvl));
     return (!Object.values(filters.level).includes(true) || levelMatch);
@@ -131,7 +146,7 @@ const Levels = () => {
               </span>
             </div>
             <div className="levels-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>

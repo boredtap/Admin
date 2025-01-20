@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import CreateNewReward from '../components/CreateNewReward';
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css"; 
 import './Rewards.css';
 
@@ -190,6 +191,22 @@ const Rewards = () => {
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
+  const handleExport = () => {
+    const dataToExport = filteredData.map(reward => ({
+      'Reward Title': reward.title,
+      'Reward': reward.reward,
+      'Beneficiary': reward.beneficiary,
+      'Launch Date': reward.launchDate,
+      'Status': reward.status,
+      'Claim Rate': reward.claimRate,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Rewards');
+    XLSX.writeFile(workbook, 'rewards.xlsx');
+  };
+
   return (
     <div className="rewards-page">
       <NavigationPanel />
@@ -219,7 +236,7 @@ const Rewards = () => {
               </span>
             </div>
             <div className="rewards-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>

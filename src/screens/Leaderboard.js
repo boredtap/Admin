@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
 import './Leaderboard.css';
 
@@ -184,6 +185,22 @@ const Leaderboard = () => {
     setSelectedRows([]);
   };
 
+  const handleExport = () => {
+    const dataToExport = filteredData.map(user => ({
+      'Rank': user.rank,
+      'Username': user.username,
+      'Level': user.level,
+      'Coin Earned': user.coinEarned,
+      'Clan': user.clan,
+      'Highest Streak': user.highestStreak,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Leaderboard');
+    XLSX.writeFile(workbook, 'leaderboard.xlsx');
+  };
+
   const filteredData = leaderboardData[activeTab].filter(user => {
     const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && user.level === level);
     return (!Object.values(filters.level).includes(true) || levelMatch);
@@ -212,7 +229,7 @@ const Leaderboard = () => {
               ))}
             </div>
             <div className="leaderboard-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>

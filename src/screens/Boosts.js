@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
-// import CreateBoostOverlay from '../components/CreateBoostOverlay';
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
 import './Boosts.css';
 
@@ -12,7 +12,6 @@ const Boosts = () => {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
-  // const [showCreateBoostOverlay, setShowCreateBoostOverlay] = useState(false);
 
   const [filters, setFilters] = useState({
     level: {
@@ -100,6 +99,22 @@ const Boosts = () => {
     setSelectedRows([]);
   };
 
+  const handleExport = () => {
+    const dataToExport = filteredData.map(boost => ({
+      'Name': boost.name,
+      'Description': boost.description,
+      'Level': boost.level,
+      'Effect': boost.effect,
+      'Upgrade Cost': boost.upgradeCost,
+      'Condition': boost.condition,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Boosts');
+    XLSX.writeFile(workbook, 'boosts.xlsx');
+  };
+
   const filteredData = boostsData[activeTab].filter(boost => {
     const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && boost.level.includes(level));
     return (!Object.values(filters.level).includes(true) || levelMatch);
@@ -130,13 +145,11 @@ const Boosts = () => {
               </span>
             </div>
             <div className="boosts-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button className="btn create-btn"
-                // onClick={() => setShowCreateBoostOverlay(true)}
-              >
+              <button className="btn create-btn">
                 <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Boost" className="btn-icon" />
                 Booster
               </button>

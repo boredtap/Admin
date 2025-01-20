@@ -205,11 +205,11 @@ const Security = () => {
       {showOverlay && (
         <div className="overlay-backdrop">
           <div className="overlay-content">
-            <img
+            <center><img
               src={`${process.env.PUBLIC_URL}/overlay icon.png`}
               alt="overlay Icon"
               className="overlay-icon"
-            />
+            /></center>
             <h2>{formData.userStatus === 'Ban' ? 'Ban User?' : 'Suspend User?'}</h2>
             <p>
               {formData.userStatus === 'Ban'
