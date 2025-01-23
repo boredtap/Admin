@@ -247,3 +247,67 @@ select:hover option {
 .submit-button:hover {
   background-color: orange;
 }
+
+  /* Success Overlay Styles */
+  .success-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .success-content {
+    background-color: #202022;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    color: white;
+    width: 320px;
+  }
+  
+  .success-icon {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 16px;
+    position: center;
+  }
+  
+  .success-content h2 {
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 16px;
+  }
+  
+  .success-content p {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  
+  .success-proceed-button {
+    width: 100%;
+    height: 48px;
+    background-color: #000000;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 16px;
+  }
+  
+  .success-proceed-button:hover {
+    background-color: red;
+  }
+  
+  .create-new-task-link {
+    color: white;
+    text-decoration: underline;
+    cursor: pointer;
+  }

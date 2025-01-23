@@ -126,10 +126,10 @@
   .submit-button {
     width: 100%;
     height: 48px;
-    background-color: #FF0000;
+    background-color: #ffffff;
     border: none;
     border-radius: 8px;
-    color: white;
+    color: rgb(0, 0, 0);
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
@@ -137,7 +137,7 @@
   }
   
   .submit-button:hover {
-    background-color: #cc0000;
+    background-color: orange;
   }
 
   /* Overlay Styles */
@@ -184,7 +184,7 @@
   .overlay-submit-button {
     width: 100%;
     height: 48px;
-    background-color: #FF0000;
+    background-color: #000000;
     border: none;
     border-radius: 8px;
     color: white;
@@ -195,7 +195,7 @@
   }
   
   .overlay-submit-button:hover {
-    background-color: #cc0000;
+    background-color: red;
   }
   
   .overlay-back-link {

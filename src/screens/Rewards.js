@@ -17,6 +17,8 @@ const Rewards = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showCreateNewReward, setShowCreateNewReward] = useState(false);
+  const [rewardToEdit, setRewardToEdit] = useState(null);
+  const [showDeleteOverlay, setShowDeleteOverlay] = useState(false);
 
   const [filters, setFilters] = useState({
     status: {
@@ -181,15 +183,33 @@ const Rewards = () => {
     setSelectedRows([]);
   };
 
-  const filteredData = rewardsData[activeTab].filter(reward => {
-    const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && reward.status === status);
-    const beneficiaryMatch = Object.keys(filters.beneficiary).some(beneficiary => filters.beneficiary[beneficiary] && reward.beneficiary === beneficiary);
-    return (!Object.values(filters.status).includes(true) || statusMatch) &&
-           (!Object.values(filters.beneficiary).includes(true) || beneficiaryMatch);
-  });
+  const handleCreateReward = () => {
+    setRewardToEdit(null);
+    setShowCreateNewReward(true);
+  };
 
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const handleEditReward = (reward) => {
+    setRewardToEdit(reward);
+    setShowCreateNewReward(true);
+  };
+
+  const handleSubmitReward = (reward) => {
+    if (rewardToEdit) {
+      // Update existing reward
+      const updatedData = rewardsData[activeTab].map(r => r.id === reward.id ? reward : r);
+      setRewardsData(prev => ({
+        ...prev,
+        [activeTab]: updatedData
+      }));
+    } else {
+      // Create new reward
+      setRewardsData(prev => ({
+        ...prev,
+        [activeTab]: [...prev[activeTab], reward]
+      }));
+    }
+    setShowCreateNewReward(false);
+  };
 
   const handleExport = () => {
     const dataToExport = filteredData.map(reward => ({
@@ -206,6 +226,16 @@ const Rewards = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Rewards');
     XLSX.writeFile(workbook, 'rewards.xlsx');
   };
+
+  const filteredData = rewardsData[activeTab].filter(reward => {
+    const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && reward.status === status);
+    const beneficiaryMatch = Object.keys(filters.beneficiary).some(beneficiary => filters.beneficiary[beneficiary] && reward.beneficiary === beneficiary);
+    return (!Object.values(filters.status).includes(true) || statusMatch) &&
+           (!Object.values(filters.beneficiary).includes(true) || beneficiaryMatch);
+  });
+
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
     <div className="rewards-page">
@@ -242,7 +272,7 @@ const Rewards = () => {
               </button>
               <button 
                 className="btn create-btn"
-                onClick={() => setShowCreateNewReward(true)}
+                onClick={handleCreateReward}
               >
                 <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Reward" className="btn-icon" />
                 New Reward
@@ -323,7 +353,7 @@ const Rewards = () => {
                   </div>
                 )}
               </div>
-              <button className="btn delete-btn" onClick={handleDelete}>
+              <button className="btn delete-btn" onClick={() => setShowDeleteOverlay(true)}>
                 <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
                 Delete
               </button>
@@ -381,11 +411,11 @@ const Rewards = () => {
                 <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
                 {showActionDropdown === index && (
                   <div className="action-dropdown">
-                    <div className="dropdown-item">
+                    <div className="dropdown-item" onClick={() => handleEditReward(reward)}>
                       <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
                       <span>Edit</span>
                     </div>
-                    <div className="dropdown-item">
+                    <div className="dropdown-item" onClick={() => setShowDeleteOverlay(true)}>
                       <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
                       <span>Delete</span>
                     </div>
@@ -438,7 +468,27 @@ const Rewards = () => {
           {showCreateNewReward && (
             <CreateNewReward 
               onClose={() => setShowCreateNewReward(false)}
+              rewardToEdit={rewardToEdit}
+              onSubmit={handleSubmitReward}
             />
+          )}
+
+          {showDeleteOverlay && (
+            <div className="overlay-backdrop">
+              <div className="overlay-content">
+                <center><img
+                  src={`${process.env.PUBLIC_URL}/Red Delete.png`}
+                  alt="Delete Icon"
+                  className="overlay-icon"
+                /></center>
+                <h2>Delete?</h2>
+                <p>Are you sure to delete this reward?</p>
+                <button className="overlay-submit-button" onClick={handleDelete}>
+                  Delete
+                </button>
+                <a href="#" className="overlay-back-link" onClick={() => setShowDeleteOverlay(false)}>Back</a>
+              </div>
+            </div>
           )}
         </div>
       </div>

@@ -17,6 +17,9 @@ const Tasks = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showCreateTaskOverlay, setShowCreateTaskOverlay] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState(null);
+  const [showDeleteOverlay, setShowDeleteOverlay] = useState(false);
+
   const [filters, setFilters] = useState({
     status: {
       Active: false,
@@ -29,6 +32,7 @@ const Tasks = () => {
       'Social': false
     }
   });
+
   const [tasksData, setTasksData] = useState({
     "All Tasks": [],
     "In-Game": [],
@@ -53,7 +57,6 @@ const Tasks = () => {
     });
   };
 
-  // Custom date picker functions
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -183,16 +186,33 @@ const Tasks = () => {
     setSelectedRows([]);
   };
 
-  const filteredData = tasksData[activeTab].filter(task => {
-    const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && task.status === status);
-    const typeMatch = Object.keys(filters.type).some(type => filters.type[type] && task.type === type);
-    return (!Object.values(filters.status).includes(true) || statusMatch) &&
-           (!Object.values(filters.type).includes(true) || typeMatch);
-  });
+  const handleCreateTask = () => {
+    setTaskToEdit(null);
+    setShowCreateTaskOverlay(true);
+  };
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const handleEditTask = (task) => {
+    setTaskToEdit(task);
+    setShowCreateTaskOverlay(true);
+  };
+
+  const handleSubmitTask = (task) => {
+    if (taskToEdit) {
+      // Update existing task
+      const updatedData = tasksData[activeTab].map(t => t.id === task.id ? task : t);
+      setTasksData(prev => ({
+        ...prev,
+        [activeTab]: updatedData
+      }));
+    } else {
+      // Create new task
+      setTasksData(prev => ({
+        ...prev,
+        [activeTab]: [...prev[activeTab], task]
+      }));
+    }
+    setShowCreateTaskOverlay(false);
+  };
 
   const handleExport = () => {
     const dataToExport = filteredData.map(task => ({
@@ -209,6 +229,16 @@ const Tasks = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Tasks');
     XLSX.writeFile(workbook, 'tasks.xlsx');
   };
+
+  const filteredData = tasksData[activeTab].filter(task => {
+    const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && task.status === status);
+    const typeMatch = Object.keys(filters.type).some(type => filters.type[type] && task.type === type);
+    return (!Object.values(filters.status).includes(true) || statusMatch) &&
+           (!Object.values(filters.type).includes(true) || typeMatch);
+  });
+
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
     <div className="tasks-page">
@@ -229,7 +259,7 @@ const Tasks = () => {
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button className="btn create-btn" onClick={() => setShowCreateTaskOverlay(true)}>
+              <button className="btn create-btn" onClick={handleCreateTask}>
                 <img src={`${process.env.PUBLIC_URL}/create.png`} alt="Create Tasks" className="btn-icon" />
                 Create Tasks
               </button>
@@ -309,7 +339,7 @@ const Tasks = () => {
                   </div>
                 )}
               </div>
-              <button className="btn delete-btn" onClick={handleDelete}>
+              <button className="btn delete-btn" onClick={() => setShowDeleteOverlay(true)}>
                 <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
                 Delete
               </button>
@@ -362,11 +392,11 @@ const Tasks = () => {
                 <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
                 {showActionDropdown === index && (
                   <div className="action-dropdown">
-                    <div className="dropdown-item">
+                    <div className="dropdown-item" onClick={() => handleEditTask(task)}>
                       <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
                       <span>Edit</span>
                     </div>
-                    <div className="dropdown-item">
+                    <div className="dropdown-item" onClick={() => setShowDeleteOverlay(true)}>
                       <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
                       <span>Delete</span>
                     </div>
@@ -414,10 +444,31 @@ const Tasks = () => {
               />
             </div>
           </div>
+          
           {showCreateTaskOverlay && (
             <CreateTaskOverlay 
               onClose={() => setShowCreateTaskOverlay(false)}
+              taskToEdit={taskToEdit}
+              onSubmit={handleSubmitTask}
             />
+          )}
+
+          {showDeleteOverlay && (
+         <div className="overlay-backdrop">
+          <div className="overlay-content">
+            <center><img
+              src={`${process.env.PUBLIC_URL}/Red Delete.png`}
+              alt="Delete Icon"
+              className="overlay-icon"
+            /></center>
+            <h2>Delete?</h2>
+            <p>Are you sure to delete this task?</p>
+            <button className="overlay-submit-button" onClick={handleDelete}>
+              Delete
+            </button>
+            <a href="#" className="overlay-back-link" onClick={() => setShowDeleteOverlay(false)}>Back</a>
+            </div>
+            </div>
           )}
         </div>
       </div>
