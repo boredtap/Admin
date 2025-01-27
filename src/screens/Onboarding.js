@@ -12,7 +12,7 @@ const Onboarding = () => {
     setTimeout(() => {
       setLoading(false);
       setShowSignIn(true);
-    }, 3000); // Simulate loading for 3 seconds
+    }, 2000); // Simulate loading for 2 seconds
   }, []);
 
   const handleSignInSuccess = () => {
@@ -23,7 +23,7 @@ const Onboarding = () => {
     <div className="onboarding-container">
       {loading && (
         <div className="loading-screen">
-          <center><img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="logo" /></center>
+          <center><img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="logo2" /></center>
           <h1 className="app-name">BoredTap App</h1>
           <div className="loader"></div>
         </div>
