@@ -27,12 +27,31 @@ const Dashboard = () => {
     leaderboardList: []
   });
 
+  const fetchData = async (url, key) => {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      const data = await response.json();
+      setDashboardData(prev => ({ ...prev, [key]: data }));
+    } catch (error) {
+      console.error(`Error fetching ${key}:`, error);
+    }
+  };
+
   useEffect(() => {
-    // Fetch data from backend
-    fetch('/api/dashboard-data')
-      .then(response => response.json())
-      .then(data => setDashboardData(data))
-      .catch(error => console.error('Error fetching dashboard data:', error));
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_new_users', 'newUsers');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coins_earned', 'totalCoinEarned');
+    fetchData('/api/token_distributed_percentage', 'tokenDistributedPercentage');
+    fetchData('/api/total_coin_earned_monthly', 'totalCoinEarnedMonthly');
+    fetchData('/api/total_users_monthly', 'totalUsersMonthly');
+    fetchData('/api/user_levels', 'userLevels');
+    fetchData('/api/wallet_connections', 'walletConnections');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/new_users', 'newUsersList');
+    fetchData('/api/leaderboard_list', 'leaderboardList');
   }, []);
 
   useEffect(() => {

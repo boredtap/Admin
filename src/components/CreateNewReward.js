@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './CreateNewReward.css';
 
 const clans = ["TON Station", "HiddenCode", "h2o", "Tapper Legends"];
 const levels = [

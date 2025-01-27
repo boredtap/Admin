@@ -303,7 +303,7 @@ select:hover option {
   }
   
   .success-proceed-button:hover {
-    background-color: red;
+    background-color: rgb(91, 160, 0);
   }
   
   .create-new-task-link {
