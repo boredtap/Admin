@@ -1,0 +1,447 @@
+{
+    "dashboard-data": {
+      "totalUsers": 7280218,
+      "totalUsersPercentage": 11.01,
+      "newUsers": 62218,
+      "newUsersPercentage": 26.10,
+      "totalCoinEarned": 129037280218,
+      "totalCoinEarnedPercentage": -0.06,
+      "tokenDistributedPercentage": 7.01,
+      "totalCoinEarnedMonthly": [0, 2, 5, 10, 25, 50, 70, 85, 90, 95, 98, 100],
+      "totalUsersMonthly": [5, 10, 15, 20, 30, 45, 65, 75, 85, 90, 95, 100],
+      "userLevels": [0.5, 1, 2, 3, 5, 6, 7, 8, 9, 10],
+      "walletConnections": [75, 25],
+      "newUsersList": [
+        "New User 1",
+        "New User 2",
+        "New User 3",
+        "New User 4",
+        "New User 5",
+        "New User 6",
+        "New User 7",
+        "New User 8",
+        "New User 9",
+        "New User 10"
+      ],
+      "leaderboardList": [
+        "Leader 1",
+        "Leader 2",
+        "Leader 3",
+        "Leader 4",
+        "Leader 5",
+        "Leader 6",
+        "Leader 7",
+        "Leader 8",
+        "Leader 9",
+        "Leader 10"
+      ]
+    },
+  
+    "tasks-data": {
+      "All Tasks": [
+        {
+          "name": "Invite One (1) Friend",
+          "type": "In-Game",
+          "description": "Invite just 1 friend",
+          "status": "Active",
+          "reward": "2,000",
+          "participants": "All Users"
+        },
+        {
+          "name": "Complete 5 Games",
+          "type": "Special",
+          "description": "Play 5 games to earn rewards",
+          "status": "Paused",
+          "reward": "1,000",
+          "participants": "Gamers Only"
+        },
+        {
+          "name": "Complete 5 Games",
+          "type": "Social",
+          "description": "Play 5 games to earn rewards",
+          "status": "Inactive",
+          "reward": "4,000",
+          "participants": "Specialist"
+        }
+      ],
+      "In-Game": [
+        {
+          "name": "Reach Level 10",
+          "type": "In-Game",
+          "description": "Reach level 10",
+          "status": "Active",
+          "reward": "700",
+          "participants": "New Players"
+        }
+      ],
+      "Special": [
+        {
+          "name": "Join Tournament",
+          "type": "Special",
+          "description": "Participate in tournaments",
+          "status": "Active",
+          "reward": "5,000",
+          "participants": "Tournament Players"
+        }
+      ],
+      "Social": [
+        {
+          "name": "Share on Social Media",
+          "type": "Social",
+          "description": "Share this game on any platform",
+          "status": "Inactive",
+          "reward": "300",
+          "participants": "Social Players"
+        }
+      ]
+    },
+  
+    "reward-data": {
+      "All Rewards": [
+        {
+          "title": "Monthly BT Reward",
+          "reward": "5,000",
+          "beneficiary": "All Users",
+          "launchDate": "2024-12-25",
+          "status": "On-going",
+          "claimRate": "81.14"
+        },
+        {
+          "title": "Leaderboard Champ",
+          "reward": "5,000",
+          "beneficiary": "All Users",
+          "launchDate": "2024-12-25",
+          "status": "Claimed",
+          "claimRate": "81.14"
+        }
+      ],
+      "On-going Rewards": [
+        {
+          "title": "Streak Master",
+          "reward": "8,000",
+          "beneficiary": "All Users",
+          "launchDate": "2024-12-25",
+          "status": "On-going",
+          "claimRate": "81.14"
+        }
+      ],
+      "Claimed Rewards": [
+        {
+          "title": "Leaderboard Champ",
+          "reward": "7,000",
+          "beneficiary": "All Users",
+          "launchDate": "2024-12-25",
+          "status": "Claimed",
+          "claimRate": "100"
+        }
+      ]
+    },
+  
+    "challenges-data": {
+      "Opened Challenges": [
+        {
+          "challengeName": "Tap Marathon",
+          "description": "Achieve 50,000 taps within 24hrs.",
+          "startDate": "2024-12-19",
+          "reward": "2,000",
+          "remainingTime": "10:46:23",
+          "participants": "All Users"
+        },
+        {
+          "challengeName": "Daily Quest Master",
+          "description": "Complete all daily quests for 7 consecutive days",
+          "startDate": "2024-12-20",
+          "reward": "5,000",
+          "remainingTime": "23:15:45",
+          "participants": "VIP Users"
+        },
+        {
+          "challengeName": "Social Butterfly",
+          "description": "Invite 20 friends to join the platform",
+          "startDate": "2024-12-21",
+          "reward": "3,500",
+          "remainingTime": "15:30:00",
+          "participants": "All Users"
+        }
+      ],
+      "Completed Challenges": [
+        {
+          "challengeName": "Speed Runner",
+          "description": "Complete 100 tasks in under 1 hour",
+          "startDate": "2024-12-15",
+          "reward": "4,000",
+          "remainingTime": "00:00:00",
+          "participants": "Selected Users"
+        },
+        {
+          "challengeName": "Weekend Warrior",
+          "description": "Maintain top activity for 48 hours",
+          "startDate": "2024-12-16",
+          "reward": "6,000",
+          "remainingTime": "00:00:00",
+          "participants": "All Users"
+        }
+      ]
+    },
+  
+    "clans-data": {
+      "All Clans": [
+        {
+          "name": "TON Station",
+          "creator": "Ridwan007",
+          "rank": "#1",
+          "coins": { "icon": "coin.png", "value": 67127478 },
+          "creationDate": "19/12/2024",
+          "status": "Active"
+        },
+        {
+          "name": "Active Clan",
+          "creator": "User1",
+          "rank": "#2",
+          "coins": { "icon": "coin.png", "value": 1000000 },
+          "creationDate": "20/12/2024",
+          "status": "Active"
+        },
+        {
+          "name": "Pending Clan",
+          "creator": "User2",
+          "rank": "#3",
+          "coins": { "icon": "coin.png", "value": 500000 },
+          "creationDate": "21/12/2024",
+          "status": "Pending"
+        },
+        {
+          "name": "Disbanded Clan",
+          "creator": "User3",
+          "rank": "#4",
+          "coins": { "icon": "coin.png", "value": 100000 },
+          "creationDate": "22/12/2024",
+          "status": "Disband"
+        }
+      ],
+      "Active": [
+        {
+          "name": "Active Clan",
+          "creator": "User1",
+          "rank": "#2",
+          "coins": { "icon": "coin.png", "value": 1000000 },
+          "creationDate": "20/12/2024",
+          "status": "Active"
+        }
+      ],
+      "Pending Approval": [
+        {
+          "name": "Pending Clan",
+          "creator": "User2",
+          "rank": "#3",
+          "coins": { "icon": "coin.png", "value": 500000 },
+          "creationDate": "21/12/2024",
+          "status": "Pending"
+        }
+      ],
+      "Disband": [
+        {
+          "name": "Disbanded Clan",
+          "creator": "User3",
+          "rank": "#4",
+          "coins": { "icon": "coin.png", "value": 100000 },
+          "creationDate": "22/12/2024",
+          "status": "Disband"
+        }
+      ]
+    },
+  
+    "leaderboard-data": {
+      "All Time": [
+        {
+          "rank": "#1",
+          "username": "AjoseD28",
+          "level": "Legend",
+          "coinEarned": "7,127,478,606",
+          "clan": "TON Station",
+          "highestStreak": "16-12-2024"
+        },
+        {
+          "rank": "#2",
+          "username": "User1",
+          "level": "Master",
+          "coinEarned": "1,000,000",
+          "clan": "Daily Warriors",
+          "highestStreak": "17-12-2024"
+        }
+      ],
+      "Daily": [
+        {
+          "rank": "#2",
+          "username": "User1",
+          "level": "Master",
+          "coinEarned": "1,000,000",
+          "clan": "Daily Warriors",
+          "highestStreak": "17-12-2024"
+        }
+      ],
+      "Weekly": [
+        {
+          "rank": "#3",
+          "username": "User2",
+          "level": "Conqueror",
+          "coinEarned": "500,000",
+          "clan": "Weekly Wonders",
+          "highestStreak": "18-12-2024"
+        }
+      ],
+      "Monthly": [
+        {
+          "rank": "#4",
+          "username": "User3",
+          "level": "Specialist",
+          "coinEarned": "100,000",
+          "clan": "Monthly Masters",
+          "highestStreak": "19-12-2024"
+        }
+      ]
+    },
+  
+    "boosts-data": {
+      "Extra Boosters": [
+        {
+          "name": "Boost",
+          "description": "Increase the amount of BT-Coin you can earn per one tap",
+          "level": "Level-1",
+          "effect": "+1 per tap",
+          "upgradeCost": "50,000",
+          "condition": "Upgrade Cost",
+          "action": "Action"
+        },
+        {
+          "name": "Boost",
+          "description": "Increase the amount of BT-Coin you can earn per one tap",
+          "level": "Level-2",
+          "effect": "+2 per tap",
+          "upgradeCost": "100,000",
+          "condition": "Upgrade Cost",
+          "action": "Action"
+        }
+      ],
+      "Streak": [
+        {
+          "name": "Boost",
+          "description": "Increase the amount of BT-Coin you can earn per one tap",
+          "level": "Level-1",
+          "effect": "+1 per tap",
+          "upgradeCost": "50,000",
+          "condition": "Upgrade Cost",
+          "action": "Action"
+        },
+        {
+          "name": "Boost",
+          "description": "Increase the amount of BT-Coin you can earn per one tap",
+          "level": "Level-2",
+          "effect": "+2 per tap",
+          "upgradeCost": "100,000",
+          "condition": "Upgrade Cost",
+          "action": "Action"
+        }
+      ]
+    },
+  
+    "levels-data": {
+      "Levels": [
+        {
+          "name": "Novice",
+          "badge": "novice.png",
+          "level": "Lv 1",
+          "requirement": "0",
+          "action": "Action"
+        },
+        {
+          "name": "Explorer",
+          "badge": "explorer.png",
+          "level": "Lv 2",
+          "requirement": "5,000",
+          "action": "Action"
+        },
+        {
+          "name": "Apprentice",
+          "badge": "apprentice.png",
+          "level": "Lv 3",
+          "requirement": "25,000",
+          "action": "Action"
+        },
+        {
+          "name": "Warrior",
+          "badge": "warrior.png",
+          "level": "Lv 4",
+          "requirement": "100,000",
+          "action": "Action"
+        },
+        {
+          "name": "Master",
+          "badge": "master.png",
+          "level": "Lv 5",
+          "requirement": "500,000",
+          "action": "Action"
+        },
+        {
+          "name": "Champion",
+          "badge": "champion.png",
+          "level": "Lv 6",
+          "requirement": "1,000,000",
+          "action": "Action"
+        },
+        {
+          "name": "Tactician",
+          "badge": "tactician.png",
+          "level": "Lv 7",
+          "requirement": "20,000,000",
+          "action": "Action"
+        },
+        {
+          "name": "Specialist",
+          "badge": "specialist.png",
+          "level": "Lv 8",
+          "requirement": "100,000,000",
+          "action": "Action"
+        }
+      ]
+    }
+
+    {
+      "All Users": [
+        {
+          "name": "John Doe",
+          "level": "Novice-Lv 1",
+          "coins": { "value": 100 },
+          "inviteCount": 5,
+          "registrationDate": "01-01-2023",
+          "status": "Active"
+        },
+        {
+          "name": "Jane Smith",
+          "level": "Explorer-Lv 2",
+          "coins": { "value": 200 },
+          "inviteCount": 10,
+          "registrationDate": "02-01-2023",
+          "status": "Suspended"
+        }
+      ],
+      "Top 1000": [
+        {
+          "name": "Alice Johnson",
+          "level": "Master - Lv 5",
+          "coins": { "value": 500 },
+          "inviteCount": 50,
+          "registrationDate": "03-01-2023",
+          "status": "Active"
+        },
+        {
+          "name": "Bob Brown",
+          "level": "Champion - Lv 6",
+          "coins": { "value": 600 },
+          "inviteCount": 60,
+          "registrationDate": "04-01-2023",
+          "status": "Disband"
+        }
+      ]
+    }
+  }

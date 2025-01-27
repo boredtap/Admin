@@ -1,144 +1,187 @@
 .app-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Distribute space between the three sections */
-    position: fixed; /* Fix the AppBar to the screen */
-    top: 0; /* Stick to the top of the screen */
-    left: 194px; /* Starts after NavigationPanel with 20px spacing */
-    right: 12px; /* Add space for the right section */
-    height: 96px; /* Height of the AppBar */
-    background-color: #202022;
-    color: #fff;
-    padding: 0 20px;
-    z-index: 1000;
-    border-radius: 0 0 8px 8px; /* Radius only for the bottom two corners */
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Distribute space between the three sections */
+  position: fixed; /* Fix the AppBar to the screen */
+  top: 0; /* Stick to the top of the screen */
+  left: 194px; /* Starts after NavigationPanel with 20px spacing */
+  right: 12px; /* Add space for the right section */
+  height: 96px; /* Height of the AppBar */
+  background-color: #202022;
+  color: #fff;
+  padding: 0 20px;
+  z-index: 1000;
+  border-radius: 0 0 8px 8px; /* Radius only for the bottom two corners */
 }
 
-  
-  .left-section {
-    display: flex;
-    align-items: center;
-  }
-  
-  .title-and-time {
-    display: flex;
-    align-items: center;
-    gap: 64px; /* Spacing between title and time/date */
-  }
-  
-  .screen-name {
-    font-size: 20px;
-    font-weight: bold;
-    color: orange;
-  }
-  
-  .time-date {
-    display: flex;
-    flex-direction: column;
-    text-align: left;
-  }
-  
-  .time {
-    font-size: 30px;
-    font-weight: bold;
-  }
-  
-  .date {
-    font-size: 12px;
-    color: #ccc;
-  }
-  
-  .middle-section {
-    flex-grow: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .search-bar {
-    display: flex;
-    align-items: center;
-    background-color: #19191A;
-    width: 400px;
-    width: 520px;
-    height: 48px;
-    border-radius: 8px;
-    padding-left: 10px; /* Add padding to create space for the icon */
-  }
-  
-  .search-icon {
-    width: 24px;
-    height: 24px;
-    margin-right: 10px;
-    
-  }
-  
-  .search-input {
-    flex-grow: 1;
-    height: 100%;
-    border: none;
-    background: none;
-    color: #fff;
-    font-size: 16px;
-    outline: none;
-    padding-right: 10px; /* Ensure input text is not flush with the right edge */
-  }
-  
+.left-section {
+  display: flex;
+  align-items: center;
+}
 
-  
-  .right-section {
-    display: flex;
-    align-items: center;
+.title-and-time {
+  display: flex;
+  align-items: center;
+  gap: 100px; /* Spacing between title and time/date */
+}
+
+.screen-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: orange;
+}
+
+.time-date {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.time {
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.date {
+  font-size: 12px;
+  color: #ccc;
+}
+
+/* .middle-section {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} */
+
+/* .search-bar {
+  display: flex;
+  align-items: center;
+  background-color: #19191A;
+  width: 200px;
+  height: 48px;
+  border-radius: 8px;
+  padding-left: 10px; 
+} */
+
+/* .search-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+}
+
+.search-input {
+  flex-grow: 1;
+  height: 100%;
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  padding-right: 10px;
+} */
+
+.right-section {
+  display: flex;
+  align-items: center;
+}
+
+.notification-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 40px;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+}
+
+.profile-picture {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.username {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.role {
+  font-size: 12px;
+  color: orange;
+}
+
+@media screen and (max-width: 100%) {
+  .app-bar {
+    left: 0; /* For smaller screens, no gap from NavigationPanel */
+    right: 0; /* No gap on the right */
+    padding: 0 10px; /* Reduce padding */
   }
-  
-  .notification-icon {
-    width: 24px;
-    height: 24px;
-    margin-right: 40px;
+
+  .title-and-time {
+    gap: 20px; /* Reduce spacing on smaller screens */
   }
-  
-  .profile {
-    display: flex;
-    align-items: center;
+
+  .time {
+    font-size: 24px; /* Reduce font size */
   }
-  
-  .profile-picture {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    margin-right: 10px;
+
+  .date {
+    font-size: 10px; /* Reduce font size */
   }
-  
-  .profile-info {
-    display: flex;
+
+  /* .search-bar {
+    width: 100px;
+  } */
+}
+
+@media screen and (max-width: 768px) {
+  .app-bar {
     flex-direction: column;
-    text-align: left;
+    height: auto;
+    padding: 10px;
+    width: 100%;
   }
-  
+
+  .title-and-time {
+    gap: 10px; /* Reduce spacing on smaller screens */
+  }
+
+  .time {
+    font-size: 20px; /* Reduce font size */
+  }
+
+  .date {
+    font-size: 8px; /* Reduce font size */
+  }
+
+  /* .search-bar {
+    width: 100%;
+  } */
+
+  .notification-icon {
+    margin-right: 20px; /* Reduce margin */
+  }
+
+  .profile-picture {
+    width: 40px; /* Reduce size */
+    height: 40px; /* Reduce size */
+  }
+
   .username {
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 14px; /* Reduce font size */
   }
-  
+
   .role {
-    font-size: 12px;
-    color: orange;
+    font-size: 10px; /* Reduce font size */
   }
-  
-  @media screen and (max-width: 768px) {
-    .app-bar {
-      left: 0; /* For smaller screens, no gap from NavigationPanel */
-      flex-direction: column;
-      height: auto;
-      padding: 10px;
-    }
-  
-    .title-and-time {
-      gap: 10px; /* Reduce spacing on smaller screens */
-    }
-  
-    .search-bar {
-      width: 100%;
-    }
-  }
-  
+}

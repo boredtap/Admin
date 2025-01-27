@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
-// import CreateClanChallengeOverlay from '../components/CreateClanChallengeOverlay'; // Renamed
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
-import './Clans.css'; // Assuming you rename the CSS file too
+import './Clans.css';
 
 const Clans = () => {
   const [selectedRows, setSelectedRows] = useState([]);
-  const [activeTab, setActiveTab] = useState("All Clans"); // Updated tab names
+  const [activeTab, setActiveTab] = useState("All Clans");
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -15,7 +15,6 @@ const Clans = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  // const [showCreateClanChallengeOverlay, setShowCreateClanChallengeOverlay] = useState(false); // Updated
   const [filters, setFilters] = useState({
     status: {
       Active: false,
@@ -36,43 +35,21 @@ const Clans = () => {
     }
   });
 
-  // Sample data for Clans
-  const sampleData = {
-    "All Clans": Array(25).fill({ // Increased to 25 to simulate more pages
-      name: "TON Station",
-      creator: "Ridwan007",
-      rank: "#1",
-      coins: { icon: "coin.png", value: 67127478 },
-      creationDate: "19/12/2024",
-      status: "Active",
-    }),
-    "Active": Array(15).fill({
-      name: "Active Clan",
-      creator: "User1",
-      rank: "#2",
-      coins: { icon: "coin.png", value: 1000000 },
-      creationDate: "20/12/2024",
-      status: "Active",
-    }),
-    "Pending Approval": Array(5).fill({
-      name: "Pending Clan",
-      creator: "User2",
-      rank: "#3",
-      coins: { icon: "coin.png", value: 500000 },
-      creationDate: "21/12/2024",
-      status: "Pending",
-    }),
-    "Disband": Array(5).fill({
-      name: "Disbanded Clan",
-      creator: "User3",
-      rank: "#4",
-      coins: { icon: "coin.png", value: 100000 },
-      creationDate: "22/12/2024",
-      status: "Disband",
-    }),
-  };
+  const [clansData, setClansData] = useState({
+    "All Clans": [],
+    "Active": [],
+    "Pending Approval": [],
+    "Disband": []
+  });
 
-  // Rest of the component logic would remain similar, with modifications for clan context
+  useEffect(() => {
+    // Fetch data from backend
+    fetch('/api/clans-data')
+      .then(response => response.json())
+      .then(data => setClansData(data))
+      .catch(error => console.error('Error fetching clans data:', error));
+  }, []);
+
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
     return date.toLocaleDateString('en-GB', {
@@ -82,7 +59,6 @@ const Clans = () => {
     });
   };
 
-  // Custom date picker functions
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -211,12 +187,15 @@ const Clans = () => {
   };
 
   const handleDelete = () => {
-    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    sampleData[activeTab] = updatedData;
+    const updatedData = clansData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    setClansData(prev => ({
+      ...prev,
+      [activeTab]: updatedData
+    }));
     setSelectedRows([]);
   };
 
-  const filteredData = sampleData[activeTab].filter(clan => {
+  const filteredData = clansData[activeTab].filter(clan => {
     const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && clan.status === status);
     const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && clan.rank.includes(level));
     return (!Object.values(filters.status).includes(true) || statusMatch) &&
@@ -225,6 +204,22 @@ const Clans = () => {
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+  const handleExport = () => {
+    const dataToExport = filteredData.map(clan => ({
+      'Clan Name': clan.name,
+      'Owner or Creator': clan.creator,
+      'Clan Rank': clan.rank,
+      'Total Coin': clan.coins.value,
+      'Creation Date': clan.creationDate,
+      'Status': clan.status,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Clans');
+    XLSX.writeFile(workbook, 'clans.xlsx');
+  };
 
   return (
     <div className="clans-page">
@@ -246,13 +241,11 @@ const Clans = () => {
               ))}
             </div>
             <div className="clans-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button className="btn create-btn" 
-                  // onClick={() => setShowCreateClanChallengeOverlay(true)}
-                >
+              <button className="btn create-btn">
                 <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Clan Challenge" className="btn-icon" />
                 Clan Challenge
               </button>
@@ -439,11 +432,6 @@ const Clans = () => {
               />
             </div>
           </div>
-          {/* {showCreateClanChallengeOverlay && (
-            <CreateClanChallengeOverlay 
-              onClose={() => setShowCreateClanChallengeOverlay(false)}
-            />
-          )} */}
         </div>
       </div>
     </div>

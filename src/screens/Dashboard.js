@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import './Dashboard.css';
@@ -10,6 +10,49 @@ const Dashboard = () => {
   const recentActivitiesChartRef = useRef(null);
   const userLevelChartRef = useRef(null);
   const walletConnectionChartRef = useRef(null);
+
+  const [dashboardData, setDashboardData] = useState({
+    totalUsers: 0,
+    totalUsersPercentage: 0,
+    newUsers: 0,
+    newUsersPercentage: 0,
+    totalCoinEarned: 0,
+    totalCoinEarnedPercentage: 0,
+    tokenDistributedPercentage: 0,
+    totalCoinEarnedMonthly: [],
+    totalUsersMonthly: [],
+    userLevels: [],
+    walletConnections: [],
+    newUsersList: [],
+    leaderboardList: []
+  });
+
+  const fetchData = async (url, key) => {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      const data = await response.json();
+      setDashboardData(prev => ({ ...prev, [key]: data }));
+    } catch (error) {
+      console.error(`Error fetching ${key}:`, error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_new_users', 'newUsers');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coins_earned', 'totalCoinEarned');
+    fetchData('/api/token_distributed_percentage', 'tokenDistributedPercentage');
+    fetchData('/api/total_coin_earned_monthly', 'totalCoinEarnedMonthly');
+    fetchData('/api/total_users_monthly', 'totalUsersMonthly');
+    fetchData('/api/user_levels', 'userLevels');
+    fetchData('/api/wallet_connections', 'walletConnections');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/new_users', 'newUsersList');
+    fetchData('/api/leaderboard_list', 'leaderboardList');
+  }, []);
 
   useEffect(() => {
     // Recent Activities Line Chart
@@ -26,7 +69,7 @@ const Dashboard = () => {
         datasets: [
           {
             label: 'Total Coin Earned',
-            data: [0, 2, 5, 10, 25, 50, 70, 85, 90, 95, 98, 100],
+            data: dashboardData.totalCoinEarnedMonthly,
             borderColor: 'orange',
             borderWidth: 1,
             fill: false,
@@ -34,7 +77,7 @@ const Dashboard = () => {
           },
           {
             label: 'Total Users',
-            data: [5, 10, 15, 20, 30, 45, 65, 75, 85, 90, 95, 100],
+            data: dashboardData.totalUsersMonthly,
             borderColor: 'green',
             borderWidth: 1,
             fill: false,
@@ -65,95 +108,94 @@ const Dashboard = () => {
       },
     });
 
-  // User Level Bar Chart
-  const userLevelCtx = document.getElementById('user-level-chart').getContext('2d');
+    // User Level Bar Chart
+    const userLevelCtx = document.getElementById('user-level-chart').getContext('2d');
 
-  if (userLevelChartRef.current) {
-    userLevelChartRef.current.destroy();
-  }
+    if (userLevelChartRef.current) {
+      userLevelChartRef.current.destroy();
+    }
 
-  userLevelChartRef.current = new Chart(userLevelCtx, {
-    type: 'bar',
-    data: {
-      labels: [
-        'Novice',
-        'Explorer',
-        'Apprentice',
-        'Warrior',
-        'Master',
-        'Champion',
-        'Tactician',
-        'Specialist',
-        'Conqueror',
-        'Legend'
-      ],
-      datasets: [{
-        label: 'Number of Users (in Millions)',
-        data: [0.5, 1, 2, 3, 5, 6, 7, 8, 9, 10],
-        backgroundColor: '#79797A',
-        borderColor: '#79797A',
-        borderWidth: 25,
-        borderRadius: 4,
-        barPercentage: 0.6, // Increased from 0.25 to make bars wider
-        categoryPercentage: 0.8 // Added to increase bar width
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: {
-          ticks: {
-            maxRotation: 0, // Changed from 45 to 0 for horizontal labels
-            minRotation: 0  // Changed from 45 to 0 for horizontal labels
-          }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: function(value) {
-              return value + 'M';
+    userLevelChartRef.current = new Chart(userLevelCtx, {
+      type: 'bar',
+      data: {
+        labels: [
+          'Novice',
+          'Explorer',
+          'Apprentice',
+          'Warrior',
+          'Master',
+          'Champion',
+          'Tactician', 
+          'Specialist',
+          'Conqueror',
+          'Legend'
+        ],
+        datasets: [{
+          label: 'Number of Users (in Millions)',
+          data: dashboardData.userLevels,
+          backgroundColor: '#79797A',
+          borderColor: '#79797A',
+          borderWidth: 25,
+          borderRadius: 4,
+          barPercentage: 0.6, // Increased from 0.25 to make bars wider
+          categoryPercentage: 0.8 // Added to increase bar width
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: {
+              maxRotation: 0, // Changed from 45 to 0 for horizontal labels
+              minRotation: 0  // Changed from 45 to 0 for horizontal labels
+            }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return value + 'M';
+              }
             }
           }
-        }
-      },
-      plugins: {
-        legend: {
-          display: false,
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
         },
       },
-    },
-  });
+    });
 
-  // Wallet Connection Doughnut Chart
-  const walletConnectionCtx = document.getElementById('wallet-connection-chart').getContext('2d');
+    // Wallet Connection Doughnut Chart
+    const walletConnectionCtx = document.getElementById('wallet-connection-chart').getContext('2d');
 
-  if (walletConnectionChartRef.current) {
-    walletConnectionChartRef.current.destroy();
-  }
+    if (walletConnectionChartRef.current) {
+      walletConnectionChartRef.current.destroy();
+    }
 
-  walletConnectionChartRef.current = new Chart(walletConnectionCtx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Wallet Connected', 'No Wallet Connected'],
-      datasets: [{
-        data: [75, 25],
-        backgroundColor: ['#00FF00', '#FF0000'], // Green and Red
-        borderWidth: 5, // Increased border width for a thicker line
-      }],
-    },
-    
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '50%', // Reduced cutout to make donut fatter
-      plugins: {
-        legend: {
-          display: false,
+    walletConnectionChartRef.current = new Chart(walletConnectionCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Wallet Connected', 'No Wallet Connected'],
+        datasets: [{
+          data: dashboardData.walletConnections,
+          backgroundColor: ['#00FF00', '#FF0000'], // Green and Red
+          borderWidth: 5, // Increased border width for a thicker line
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '50%', // Reduced cutout to make donut fatter
+        plugins: {
+          legend: {
+            display: false,
+          },
         },
       },
-    },
-  });
+    });
 
     // Cleanup charts when component unmounts
     return () => {
@@ -167,7 +209,7 @@ const Dashboard = () => {
         walletConnectionChartRef.current.destroy();
       }
     };
-  }, []);
+  }, [dashboardData]);
 
   return (
     <div className="dashboard">
@@ -184,11 +226,11 @@ const Dashboard = () => {
                 <div className="frame-header">
                   <img src={`${process.env.PUBLIC_URL}/invite.png`} alt="Total Users" className="frame-icon" />
                   <span className="frame-percentage increment">
-                    +11.01%
+                    +{dashboardData.totalUsersPercentage}%
                     <img src={`${process.env.PUBLIC_URL}/ArrowRise.png`} alt="Increment" className="frame-percentage-icon" />
                   </span>
                 </div>
-                <div className="frame-value">7,280,218</div>
+                <div className="frame-value">{dashboardData.totalUsers.toLocaleString()}</div>
                 <div className="frame-title">Total Users</div>
               </div>
 
@@ -197,11 +239,11 @@ const Dashboard = () => {
                 <div className="frame-header">
                   <img src={`${process.env.PUBLIC_URL}/invite.png`} alt="New Users" className="frame-icon" />
                   <span className="frame-percentage increment">
-                    +26.10%
+                    +{dashboardData.newUsersPercentage}%
                     <img src={`${process.env.PUBLIC_URL}/ArrowRise.png`} alt="Increment" className="frame-percentage-icon" />
                   </span>
                 </div>
-                <div className="frame-value">62,218</div>
+                <div className="frame-value">{dashboardData.newUsers.toLocaleString()}</div>
                 <div className="frame-title">Total New Users</div>
               </div>
 
@@ -210,11 +252,11 @@ const Dashboard = () => {
                 <div className="frame-header">
                   <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Total Coin Earned" className="frame-icon" />
                   <span className="frame-percentage decrement">
-                    -0.06%
+                    {dashboardData.totalCoinEarnedPercentage}%
                     <img src={`${process.env.PUBLIC_URL}/ArrowFall.png`} alt="Decrement" className="frame-percentage-icon" />
                   </span>
                 </div>
-                <div className="frame-value">129,037,280,218</div>
+                <div className="frame-value">{dashboardData.totalCoinEarned.toLocaleString()}</div>
                 <div className="frame-title">Total Coin Earned</div>
               </div>
 
@@ -223,11 +265,11 @@ const Dashboard = () => {
                 <div className="frame-header">
                   <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Token Distributed" className="frame-icon" />
                   <span className="frame-percentage increment">
-                    +7.01%
+                    +{dashboardData.tokenDistributedPercentage}%
                     <img src={`${process.env.PUBLIC_URL}/ArrowRise.png`} alt="Increment" className="frame-percentage-icon" />
                   </span>
                 </div>
-                <div className="frame-value">46,037,280,218</div>
+                <div className="frame-value">0</div>
                 <div className="frame-title">Token Distributed</div>
               </div>
             </div>
@@ -292,10 +334,10 @@ const Dashboard = () => {
             </div>
             <div className="panel-frame">
               <ul className="user-list">
-                {Array.from({ length: 10 }).map((_, index) => (
+                {dashboardData.newUsersList.map((user, index) => (
                   <li key={index} className="user-item">
                     <img src={`${process.env.PUBLIC_URL}/profile-picture.png`} alt="Profile" className="profile-picture" />
-                    <span className="username">New User {index + 1}</span>
+                    <span className="username">{user}</span>
                   </li>
                 ))}
               </ul>
@@ -312,10 +354,10 @@ const Dashboard = () => {
             </div>
             <div className="panel-frame">
               <ul className="user-list">
-                {Array.from({ length: 10 }).map((_, index) => (
+                {dashboardData.leaderboardList.map((leader, index) => (
                   <li key={index} className="user-item">
                     <img src={`${process.env.PUBLIC_URL}/profile-picture.png`} alt="Profile" className="profile-picture" />
-                    <span className="username">Leader {index + 1}</span>
+                    <span className="username">{leader}</span>
                   </li>
                 ))}
               </ul>

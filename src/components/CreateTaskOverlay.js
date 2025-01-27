@@ -1,22 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './CreateTaskOverlay.css';
 
-const CreateTaskOverlay = ({ onClose }) => {
+const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
   const [formData, setFormData] = useState({
     taskName: '',
     taskType: '',
     description: '',
     participants: '',
     status: '',
-    deadline: null, // Changed to Date object
+    deadline: null,
     reward: '',
     image: null,
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
 
-  // Task-related options
+  useEffect(() => {
+    if (taskToEdit) {
+      setFormData(taskToEdit);
+    }
+  }, [taskToEdit]);
+
   const taskTypes = ['In-Game', 'Special', 'Social'];
   const participantLevels = [
     'All Users', 'Novice-Lv 1', 'Explorer-Lv 2', 'Apprentice-Lv 3',
@@ -44,10 +50,9 @@ const CreateTaskOverlay = ({ onClose }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    onClose();
+    setShowSuccessOverlay(true);
   };
 
   const handleDateChange = (date) => {
@@ -67,7 +72,6 @@ const CreateTaskOverlay = ({ onClose }) => {
     });
   };
 
-  // Custom Date Picker Logic
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -133,11 +137,33 @@ const CreateTaskOverlay = ({ onClose }) => {
     );
   };
 
+  const handleSuccessProceed = async () => {
+    const formDataToSend = new FormData();
+    Object.keys(formData).forEach(key => {
+      formDataToSend.append(key, formData[key]);
+    });
+
+    const response = await fetch('/api/tasks', {
+      method: taskToEdit ? 'PUT' : 'POST',
+      body: formDataToSend,
+    });
+
+    if (response.ok) {
+      const savedTask = await response.json();
+      onSubmit(savedTask);
+    } else {
+      console.error('Failed to save task');
+    }
+
+    setShowSuccessOverlay(false);
+    onClose();
+  };
+
   return (
     <div className="overlay-backdrop">
       <div className="create-task-overlay">
         <div className="overlay-header">
-          <h2>Create Tasks</h2>
+          <h2>{taskToEdit ? 'Update Task' : 'Create Task'}</h2>
           <button className="close-button" onClick={onClose}>
             <img src={`${process.env.PUBLIC_URL}/cancel.png`} alt="Cancel" />
           </button>
@@ -213,27 +239,27 @@ const CreateTaskOverlay = ({ onClose }) => {
           </div>
 
           <div className="form-row">
-          <div className="form-field">
-            <label>Task Deadline</label>
-            <div className="input-with-icon">
-              <input
-                type="text"
-                placeholder="DD-MM-YYYY"
-                value={formatDate(formData.deadline)}
-                readOnly
-              />
-              <img
-                src={`${process.env.PUBLIC_URL}/date.png`}
-                alt="Date"
-                onClick={() => setShowDatePicker(!showDatePicker)}
-              />
-              {showDatePicker && (
-                <div className="date-picker-container">
-                  <CustomDatePicker />
-                </div>
-              )}
+            <div className="form-field">
+              <label>Task Deadline</label>
+              <div className="input-with-icon">
+                <input
+                  type="text"
+                  placeholder="DD-MM-YYYY"
+                  value={formatDate(formData.deadline)}
+                  readOnly
+                />
+                <img
+                  src={`${process.env.PUBLIC_URL}/date.png`}
+                  alt="Date"
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                />
+                {showDatePicker && (
+                  <div className="date-picker-container">
+                    <CustomDatePicker />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
             <div className="form-field">
               <label>Task Reward</label>
@@ -267,6 +293,11 @@ const CreateTaskOverlay = ({ onClose }) => {
                 </label>
               </p>
               <p className="support-text">Support: jpg, jpeg, png</p>
+              {formData.image && (
+                <div className="image-preview">
+                  <img src={URL.createObjectURL(formData.image)} alt="Preview" />
+                </div>
+              )}
             </div>
           </div>
 
@@ -274,6 +305,18 @@ const CreateTaskOverlay = ({ onClose }) => {
             Submit
           </button>
         </form>
+
+        {showSuccessOverlay && (
+          <div className="success-overlay">
+            <div className="success-content">
+              <center><img src={`${process.env.PUBLIC_URL}/success.png`} alt="Success" className="success-icon" /></center>
+              <h2>Successful</h2>
+              <p>Your task is successfully created.</p>
+              <button className="success-proceed-button" onClick={handleSuccessProceed}>Proceed</button>
+              <a href="#" className="create-new-task-link" onClick={() => setShowSuccessOverlay(false)}>Create new task</a>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
 import './Levels.css';
 
@@ -22,37 +23,22 @@ const Levels = () => {
       'Champion': false,
       'Tactician': false,
       'Specialist': false,
+      'Conqueror': false,
+      'Legend': false
     }
   });
 
-  const sampleData = {
-    "Levels": [
-      {
-        name: "Novice",badge: <img src={`${process.env.PUBLIC_URL}/novice.png`} alt="novice" className="novice" />,level: "Lv 1",requirement: "0",action: "Action"
-      },
-      {
-        name: "Explorer",badge: <img src={`${process.env.PUBLIC_URL}/novice.png`} alt="novice" className="novice" />,level: "Lv 2",requirement: "5,000",action: "Action"
-      },
-      {
-        name: "Apprentice",badge: <img src={`${process.env.PUBLIC_URL}/novice.png`} alt="novice" className="novice" />,level: "Lv 3",requirement: "25,000",action: "Action"
-      },
-      {
-        name: "Warrior",badge: <img src={`${process.env.PUBLIC_URL}/novice.png`} alt="novice" className="novice" />,level: "Lv 4",requirement: "100,000",action: "Action"
-      },
-      {
-        name: "Master",badge: <img src={`${process.env.PUBLIC_URL}/novice.png`} alt="novice" className="novice" />,level: "Lv 5",requirement: "500,000",action: "Action"
-      },
-      {
-        name: "Champion",badge: <img src={`${process.env.PUBLIC_URL}/novice.png`} alt="novice" className="novice" />,level: "Lv 6",requirement: "1,000,000",action: "Action"
-      },
-      {
-        name: "Tactician",badge: <img src={`${process.env.PUBLIC_URL}/novice.png`} alt="novice" className="novice" />,level: "Lv 7",requirement: "20,000,000",action: "Action"
-      },
-      {
-        name: "Specialist",badge: <img src={`${process.env.PUBLIC_URL}/novice.png`} alt="novice" className="novice" />,level: "Lv 8",requirement: "100,000,000",action: "Action"
-      }
-    ]
-  };
+  const [levelsData, setLevelsData] = useState({
+    "Levels": []
+  });
+
+  useEffect(() => {
+    // Fetch data from backend
+    fetch('/api/levels-data')
+      .then(response => response.json())
+      .then(data => setLevelsData(data))
+      .catch(error => console.error('Error fetching levels data:', error));
+  }, []);
 
   const clearFilters = () => {
     setFilters({
@@ -65,6 +51,8 @@ const Levels = () => {
         'Champion': false,
         'Tactician': false,
         'Specialist': false,
+        'Conqueror': false,
+        'Legend': false
       }
     });
   };
@@ -112,12 +100,29 @@ const Levels = () => {
   };
 
   const handleDelete = () => {
-    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    sampleData[activeTab] = updatedData;
+    const updatedData = levelsData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    setLevelsData(prev => ({
+      ...prev,
+      [activeTab]: updatedData
+    }));
     setSelectedRows([]);
   };
 
-  const filteredData = sampleData[activeTab].filter(level => {
+  const handleExport = () => {
+    const dataToExport = filteredData.map(level => ({
+      'Name': level.name,
+      'Badge': level.badge,
+      'Level': level.level,
+      'Requirement': level.requirement,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Levels');
+    XLSX.writeFile(workbook, 'levels.xlsx');
+  };
+
+  const filteredData = levelsData[activeTab].filter(level => {
     const levelMatch = Object.keys(filters.level).some(lvl => filters.level[lvl] && level.level.includes(lvl));
     return (!Object.values(filters.level).includes(true) || levelMatch);
   });
@@ -141,7 +146,7 @@ const Levels = () => {
               </span>
             </div>
             <div className="levels-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import CreateTaskOverlay from '../components/CreateTaskOverlay';
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
 import './Tasks.css';
 
@@ -16,6 +17,9 @@ const Tasks = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showCreateTaskOverlay, setShowCreateTaskOverlay] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState(null);
+  const [showDeleteOverlay, setShowDeleteOverlay] = useState(false);
+
   const [filters, setFilters] = useState({
     status: {
       Active: false,
@@ -29,64 +33,20 @@ const Tasks = () => {
     }
   });
 
-  const sampleData = {
-    "All Tasks": [
-      {
-        name: "Invite One (1) Friend",
-        type: "In-Game",
-        description: "Invite just 1 friend",
-        status: "Active",
-        reward: "2,000",
-        participants: "All Users",
-      },
-      {
-        name: "Complete 5 Games",
-        type: "Special",
-        description: "Play 5 games to earn rewards",
-        status: "Paused",
-        reward: "1,000",
-        participants: "Gamers Only",
-      },
-      {
-        name: "Complete 5 Games",
-        type: "Social",
-        description: "Play 5 games to earn rewards",
-        status: "Inactive",
-        reward: "4,000",
-        participants: "Specialist",
-      },
-    ],
-    "In-Game": [
-      {
-        name: "Reach Level 10",
-        type: "In-Game",
-        description: "Reach level 10",
-        status: "Active",
-        reward: "700",
-        participants: "New Players",
-      },
-    ],
-    Special: [
-      {
-        name: "Join Tournament",
-        type: "Special",
-        description: "Participate in tournaments",
-        status: "Active",
-        reward: "5,000",
-        participants: "Tournament Players",
-      },
-    ],
-    Social: [
-      {
-        name: "Share on Social Media",
-        type: "Social",
-        description: "Share this game on any platform",
-        status: "Inactive",
-        reward: "300",
-        participants: "Social Players",
-      },
-    ],
-  };
+  const [tasksData, setTasksData] = useState({
+    "All Tasks": [],
+    "In-Game": [],
+    "Special": [],
+    "Social": []
+  });
+
+  useEffect(() => {
+    // Fetch data from backend
+    fetch('/api/tasks-data')
+      .then(response => response.json())
+      .then(data => setTasksData(data))
+      .catch(error => console.error('Error fetching tasks data:', error));
+  }, []);
 
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
@@ -97,7 +57,6 @@ const Tasks = () => {
     });
   };
 
-  // Custom date picker functions
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -219,19 +178,65 @@ const Tasks = () => {
   };
 
   const handleDelete = () => {
-    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    sampleData[activeTab] = updatedData;
+    const updatedData = tasksData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    setTasksData(prev => ({
+      ...prev,
+      [activeTab]: updatedData
+    }));
     setSelectedRows([]);
   };
 
-  const filteredData = sampleData[activeTab].filter(task => {
+  const handleCreateTask = () => {
+    setTaskToEdit(null);
+    setShowCreateTaskOverlay(true);
+  };
+
+  const handleEditTask = (task) => {
+    setTaskToEdit(task);
+    setShowCreateTaskOverlay(true);
+  };
+
+  const handleSubmitTask = (task) => {
+    if (taskToEdit) {
+      // Update existing task
+      const updatedData = tasksData[activeTab].map(t => t.id === task.id ? task : t);
+      setTasksData(prev => ({
+        ...prev,
+        [activeTab]: updatedData
+      }));
+    } else {
+      // Create new task
+      setTasksData(prev => ({
+        ...prev,
+        [activeTab]: [...prev[activeTab], task]
+      }));
+    }
+    setShowCreateTaskOverlay(false);
+  };
+
+  const handleExport = () => {
+    const dataToExport = filteredData.map(task => ({
+      'Task Name': task.name,
+      'Task Type': task.type,
+      'Description': task.description,
+      'Status': task.status,
+      'Reward': task.reward,
+      'Participants': task.participants,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tasks');
+    XLSX.writeFile(workbook, 'tasks.xlsx');
+  };
+
+  const filteredData = tasksData[activeTab].filter(task => {
     const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && task.status === status);
     const typeMatch = Object.keys(filters.type).some(type => filters.type[type] && task.type === type);
     return (!Object.values(filters.status).includes(true) || statusMatch) &&
            (!Object.values(filters.type).includes(true) || typeMatch);
   });
 
-  // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
@@ -250,11 +255,11 @@ const Tasks = () => {
               <span className={`pagination-item ${activeTab === "Social" ? "active" : ""}`} onClick={() => handleTabChange("Social")}>Social</span>
             </div>
             <div className="tasks-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button className="btn create-btn" onClick={() => setShowCreateTaskOverlay(true)}>
+              <button className="btn create-btn" onClick={handleCreateTask}>
                 <img src={`${process.env.PUBLIC_URL}/create.png`} alt="Create Tasks" className="btn-icon" />
                 Create Tasks
               </button>
@@ -334,7 +339,7 @@ const Tasks = () => {
                   </div>
                 )}
               </div>
-              <button className="btn delete-btn" onClick={handleDelete}>
+              <button className="btn delete-btn" onClick={() => setShowDeleteOverlay(true)}>
                 <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
                 Delete
               </button>
@@ -387,15 +392,15 @@ const Tasks = () => {
                 <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
                 {showActionDropdown === index && (
                   <div className="action-dropdown">
-                    <div className="dropdown-item">
+                    <div className="dropdown-item" onClick={() => handleEditTask(task)}>
                       <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
                       <span>Edit</span>
                     </div>
-                    <div className="dropdown-item">
+                    <div className="dropdown-item" onClick={() => setShowDeleteOverlay(true)}>
                       <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
                       <span>Delete</span>
                     </div>
-                  </div>
+                  </div> 
                 )}
               </div>
             </div>
@@ -439,10 +444,31 @@ const Tasks = () => {
               />
             </div>
           </div>
+          
           {showCreateTaskOverlay && (
             <CreateTaskOverlay 
               onClose={() => setShowCreateTaskOverlay(false)}
+              taskToEdit={taskToEdit}
+              onSubmit={handleSubmitTask}
             />
+          )}
+
+          {showDeleteOverlay && (
+         <div className="overlay-backdrop">
+          <div className="overlay-content">
+            <center><img
+              src={`${process.env.PUBLIC_URL}/Red Delete.png`}
+              alt="Delete Icon"
+              className="overlay-icon"
+            /></center>
+            <h2>Delete?</h2>
+            <p>Are you sure to delete this task?</p>
+            <button className="overlay-submit-button" onClick={handleDelete}>
+              Delete
+            </button>
+            <a href="#" className="overlay-back-link" onClick={() => setShowDeleteOverlay(false)}>Back</a>
+            </div>
+            </div>
           )}
         </div>
       </div>

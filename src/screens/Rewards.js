@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import CreateNewReward from '../components/CreateNewReward';
+import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css"; 
 import './Rewards.css';
 
@@ -16,6 +17,8 @@ const Rewards = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showCreateNewReward, setShowCreateNewReward] = useState(false);
+  const [rewardToEdit, setRewardToEdit] = useState(null);
+  const [showDeleteOverlay, setShowDeleteOverlay] = useState(false);
 
   const [filters, setFilters] = useState({
     status: {
@@ -29,46 +32,19 @@ const Rewards = () => {
     }
   });
 
-  const sampleData = {
-    "All Rewards": [
-      {
-        title: "Monthly BT Reward",
-        reward: "5,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "On-going",
-        claimRate: "81.14",
-      },
-      {
-        title: "Leaderboard Champ",
-        reward: "5,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "Claimed",
-        claimRate: "81.14",
-      },
-    ],
-    "On-going Rewards": [
-      {
-        title: "Streak Master",
-        reward: "8,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "On-going",
-        claimRate: "81.14",
-      },
-    ],
-    "Claimed Rewards": [
-      {
-        title: "Leaderboard Champ",
-        reward: "7,000",
-        beneficiary: "All Users",
-        launchDate: "25-12-2024",
-        status: "Claimed",
-        claimRate: "100",
-      },
-    ],
-  };
+  const [rewardsData, setRewardsData] = useState({
+    "All Rewards": [],
+    "On-going Rewards": [],
+    "Claimed Rewards": []
+  });
+
+  useEffect(() => {
+    // Fetch data from backend
+    fetch('/api/rewards-data')
+      .then(response => response.json())
+      .then(data => setRewardsData(data))
+      .catch(error => console.error('Error fetching rewards data:', error));
+  }, []);
 
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
@@ -199,12 +175,59 @@ const Rewards = () => {
   };
 
   const handleDelete = () => {
-    const updatedData = sampleData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    sampleData[activeTab] = updatedData;
+    const updatedData = rewardsData[activeTab].filter((_, index) => !selectedRows.includes(index));
+    setRewardsData(prev => ({
+      ...prev,
+      [activeTab]: updatedData
+    }));
     setSelectedRows([]);
   };
 
-  const filteredData = sampleData[activeTab].filter(reward => {
+  const handleCreateReward = () => {
+    setRewardToEdit(null);
+    setShowCreateNewReward(true);
+  };
+
+  const handleEditReward = (reward) => {
+    setRewardToEdit(reward);
+    setShowCreateNewReward(true);
+  };
+
+  const handleSubmitReward = (reward) => {
+    if (rewardToEdit) {
+      // Update existing reward
+      const updatedData = rewardsData[activeTab].map(r => r.id === reward.id ? reward : r);
+      setRewardsData(prev => ({
+        ...prev,
+        [activeTab]: updatedData
+      }));
+    } else {
+      // Create new reward
+      setRewardsData(prev => ({
+        ...prev,
+        [activeTab]: [...prev[activeTab], reward]
+      }));
+    }
+    setShowCreateNewReward(false);
+  };
+
+  const handleExport = () => {
+    const dataToExport = filteredData.map(reward => ({
+      'Reward Title': reward.title,
+      'Reward': reward.reward,
+      'Beneficiary': reward.beneficiary,
+      'Launch Date': reward.launchDate,
+      'Status': reward.status,
+      'Claim Rate': reward.claimRate,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Rewards');
+    XLSX.writeFile(workbook, 'rewards.xlsx');
+  };
+
+  const filteredData = rewardsData[activeTab].filter(reward => {
     const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && reward.status === status);
     const beneficiaryMatch = Object.keys(filters.beneficiary).some(beneficiary => filters.beneficiary[beneficiary] && reward.beneficiary === beneficiary);
     return (!Object.values(filters.status).includes(true) || statusMatch) &&
@@ -243,13 +266,13 @@ const Rewards = () => {
               </span>
             </div>
             <div className="rewards-buttons">
-              <button className="btn export-btn">
+              <button className="btn export-btn" onClick={handleExport}>
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
               <button 
                 className="btn create-btn"
-                onClick={() => setShowCreateNewReward(true)}
+                onClick={handleCreateReward}
               >
                 <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Reward" className="btn-icon" />
                 New Reward
@@ -330,7 +353,7 @@ const Rewards = () => {
                   </div>
                 )}
               </div>
-              <button className="btn delete-btn" onClick={handleDelete}>
+              <button className="btn delete-btn" onClick={() => setShowDeleteOverlay(true)}>
                 <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
                 Delete
               </button>
@@ -388,11 +411,11 @@ const Rewards = () => {
                 <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
                 {showActionDropdown === index && (
                   <div className="action-dropdown">
-                    <div className="dropdown-item">
+                    <div className="dropdown-item" onClick={() => handleEditReward(reward)}>
                       <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
                       <span>Edit</span>
                     </div>
-                    <div className="dropdown-item">
+                    <div className="dropdown-item" onClick={() => setShowDeleteOverlay(true)}>
                       <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
                       <span>Delete</span>
                     </div>
@@ -445,7 +468,27 @@ const Rewards = () => {
           {showCreateNewReward && (
             <CreateNewReward 
               onClose={() => setShowCreateNewReward(false)}
+              rewardToEdit={rewardToEdit}
+              onSubmit={handleSubmitReward}
             />
+          )}
+
+          {showDeleteOverlay && (
+            <div className="overlay-backdrop">
+              <div className="overlay-content">
+                <center><img
+                  src={`${process.env.PUBLIC_URL}/Red Delete.png`}
+                  alt="Delete Icon"
+                  className="overlay-icon"
+                /></center>
+                <h2>Delete?</h2>
+                <p>Are you sure to delete this reward?</p>
+                <button className="overlay-submit-button" onClick={handleDelete}>
+                  Delete
+                </button>
+                <a href="#" className="overlay-back-link" onClick={() => setShowDeleteOverlay(false)}>Back</a>
+              </div>
+            </div>
           )}
         </div>
       </div>
