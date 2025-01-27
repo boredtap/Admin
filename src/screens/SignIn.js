@@ -45,7 +45,7 @@ const SignIn = ({ onSignInSuccess }) => {
         <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="logo" />
         <h1 className="app-name">BoredTap App</h1>
       </div>
-      <h2 className="welcome-text">Welcome!</h2>
+      <h2 className="welcome-text">Welcome Admin!</h2>
       <form onSubmit={handleSignIn}>
         <div className="form-field">
           <label>User ID</label>
