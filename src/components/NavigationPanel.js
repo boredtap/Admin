@@ -7,7 +7,7 @@ const NavigationPanel = () => {
   const location = useLocation(); // To track the current active path
 
   const menuItems = [
-    { name: 'Dashboard', icon: 'logo.png', path: '/' },
+    { name: 'Dashboard', icon: 'logo.png', path: '/dashboard' },
     { name: 'Tasks', icon: 'task.png', path: '/tasks' },
     { name: 'Rewards', icon: 'reward.png', path: '/rewards' },
     { name: 'Challenges', icon: 'challenge.png', path: '/challenges' },
@@ -16,7 +16,7 @@ const NavigationPanel = () => {
     // { name: 'Invite', icon: 'invite.png', path: '/invite' },
     { name: 'Boosts', icon: 'boostx2.png', path: '/boosts' },
     { name: 'Levels', icon: 'level.png', path: '/levels' },
-    { name: 'Users', icon: 'user management.png', path: '/Users' },
+    { name: 'Users', icon: 'user management.png', path: '/users' },
     { name: 'Security', icon: 'security.png', path: '/security' },
   ];
 

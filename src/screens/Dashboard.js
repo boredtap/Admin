@@ -3,6 +3,7 @@ import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import './Dashboard.css';
 import { Chart, registerables } from 'chart.js';
+import { useNavigate } from 'react-router-dom';
 
 Chart.register(...registerables);
 
@@ -10,6 +11,8 @@ const Dashboard = () => {
   const recentActivitiesChartRef = useRef(null);
   const userLevelChartRef = useRef(null);
   const walletConnectionChartRef = useRef(null);
+  const navigate = useNavigate();
+  
 
   const [dashboardData, setDashboardData] = useState({
     totalUsers: 0,
@@ -44,7 +47,7 @@ const Dashboard = () => {
   useEffect(() => {
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_new_users', 'newUsers');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coins_earned', 'totalCoinEarned');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coin_earned', 'totalCoinEarned');
     fetchData('/api/token_distributed_percentage', 'tokenDistributedPercentage');
     fetchData('/api/total_coin_earned_monthly', 'totalCoinEarnedMonthly');
     fetchData('/api/total_users_monthly', 'totalUsersMonthly');
@@ -322,13 +325,13 @@ const Dashboard = () => {
           </div>
 
           {/* Other sections of the dashboard */}
-        </div>
+          </div>
         <div className="right-panel">
           <div className="panel-section new-users">
             <div className="panel-header">
               <h3 className="panel-title">New Users</h3>
               <div className="panel-action">
-                <span className="see-all">See all</span>
+                <span className="see-all" onClick={() => navigate('/users')}>See all</span>
                 <img src={`${process.env.PUBLIC_URL}/front-arrow.png`} alt="See all" className="see-all-icon" />
               </div>
             </div>
@@ -348,7 +351,7 @@ const Dashboard = () => {
             <div className="panel-header">
               <h3 className="panel-title">Leaderboard</h3>
               <div className="panel-action">
-                <span className="see-all">See all</span>
+                <span className="see-all" onClick={() => navigate('/leaderboard')}>See all</span>
                 <img src={`${process.env.PUBLIC_URL}/front-arrow.png`} alt="See all" className="see-all-icon" />
               </div>
             </div>
