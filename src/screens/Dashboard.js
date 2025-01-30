@@ -29,22 +29,53 @@ const Dashboard = () => {
     leaderboardList: []
   });
 
-  const fetchData = async (url, key) => {
-    try {
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`Error fetching ${key}: ${response.statusText}`);
-      }
-      const data = await response.json();
-      setDashboardData(prev => ({ ...prev, [key]: data[key] || data }));
-    } catch (error) {
-      console.error(`Error fetching ${key}:`, error);
+
+const fetchData = async (url, key) => {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Error fetching ${key}: ${response.statusText}`);
     }
-  };
+    const data = await response.json();
+    if (key === 'leaderboardList' || key === 'newUsersList') {
+      if (Array.isArray(data[key])) {
+        setDashboardData(prev => ({ ...prev, [key]: data[key] }));
+      } else if (Array.isArray(data)) {
+        setDashboardData(prev => ({ ...prev, [key]: data }));
+      } else {
+        console.error(`Data for ${key} is not an array`, data);
+        setDashboardData(prev => ({ ...prev, [key]: [] }));
+      }
+    } else if (typeof data === 'object' && data.hasOwnProperty(key)) {
+      if (typeof data[key] === 'object') {
+        const numericalValue = data[key].value || data[key].count || null;
+        if (numericalValue !== null && !isNaN(numericalValue)) {
+          setDashboardData(prev => ({ ...prev, [key]: numericalValue }));
+        } else {
+          console.error(`Could not extract numerical value for ${key}`, data[key]);
+          setDashboardData(prev => ({ ...prev, [key]: 0 }));
+        }
+      } else if (!isNaN(data[key])) {
+        setDashboardData(prev => ({ ...prev, [key]: data[key] }));
+      } else {
+        console.error(`Value for ${key} is not a number`, data[key]);
+        setDashboardData(prev => ({ ...prev, [key]: 0 }));
+      }
+    } else if (!isNaN(data)) {
+      setDashboardData(prev => ({ ...prev, [key]: data }));
+    } else {
+      console.error(`Data for ${key} is not an object or a number`, data);
+      setDashboardData(prev => ({ ...prev, [key]: 0 }));
+    }
+  } catch (error) {
+    console.error(`Error fetching ${key}:`, error);
+    setDashboardData(prev => ({ ...prev, [key]: key === 'leaderboardList' || key === 'newUsersList' ? [] : 0 }));
+  }
+};
 
   useEffect(() => {
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
