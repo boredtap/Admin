@@ -466,7 +466,7 @@ const Tasks = () => {
             <button className="overlay-submit-button" onClick={handleDelete}>
               Delete
             </button>
-            <a href="#" className="overlay-back-link" onClick={() => setShowDeleteOverlay(false)}>Back</a>
+            <button className="overlay-back-link" onClick={() => setShowDeleteOverlay(false)} style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}>Back</button>
             </div>
             </div>
           )}

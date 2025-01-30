@@ -219,9 +219,7 @@ const Security = () => {
             <button className="overlay-submit-button" onClick={handleOverlaySubmit}>
               {formData.userStatus === 'Ban' ? 'Ban' : 'Suspend'}
             </button>
-            <a href="#" className="overlay-back-link" onClick={handleOverlayClose}>
-              Back
-            </a>
+            <button className="overlay-back-link" onClick={() => handleOverlayClose(false)} style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}>Back</button>
           </div>
         </div>
       )}

@@ -313,7 +313,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
               <h2>Successful</h2>
               <p>Your task is successfully created.</p>
               <button className="success-proceed-button" onClick={handleSuccessProceed}>Proceed</button>
-              <a href="#" className="create-new-task-link" onClick={() => setShowSuccessOverlay(false)}>Create new task</a>
+              <button className="create-new-task-link" onClick={() => setShowSuccessOverlay(false)} style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}>Back</button>
             </div>
           </div>
         )}
