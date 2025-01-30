@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import './Dashboard.css';
 import { Chart, registerables } from 'chart.js';
-import { useNavigate } from 'react-router-dom';
 
 Chart.register(...registerables);
 
@@ -12,7 +12,6 @@ const Dashboard = () => {
   const userLevelChartRef = useRef(null);
   const walletConnectionChartRef = useRef(null);
   const navigate = useNavigate();
-  
 
   const [dashboardData, setDashboardData] = useState({
     totalUsers: 0,
@@ -37,8 +36,11 @@ const Dashboard = () => {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
         },
       });
+      if (!response.ok) {
+        throw new Error(`Error fetching ${key}: ${response.statusText}`);
+      }
       const data = await response.json();
-      setDashboardData(prev => ({ ...prev, [key]: data }));
+      setDashboardData(prev => ({ ...prev, [key]: data[key] || data }));
     } catch (error) {
       console.error(`Error fetching ${key}:`, error);
     }
@@ -48,13 +50,13 @@ const Dashboard = () => {
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_new_users', 'newUsers');
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coin_earned', 'totalCoinEarned');
-    fetchData('/api/token_distributed_percentage', 'tokenDistributedPercentage');
-    fetchData('/api/total_coin_earned_monthly', 'totalCoinEarnedMonthly');
-    fetchData('/api/total_users_monthly', 'totalUsersMonthly');
-    fetchData('/api/user_levels', 'userLevels');
-    fetchData('/api/wallet_connections', 'walletConnections');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/token_distributed_percentage', 'tokenDistributedPercentage');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_coin_earned_monthly', 'totalCoinEarnedMonthly');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_users_monthly', 'totalUsersMonthly');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/user_levels', 'userLevels');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/wallet_connections', 'walletConnections');
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/new_users', 'newUsersList');
-    fetchData('/api/leaderboard_list', 'leaderboardList');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/leaderboard_list', 'leaderboardList');
   }, []);
 
   useEffect(() => {
@@ -223,7 +225,6 @@ const Dashboard = () => {
           <div className="overview-section">
             <h2 className="overview-title">Overview</h2>
             <div className="data-frames">
-
               {/* Frame 1: Total Users */}
               <div className="data-frame">
                 <div className="frame-header">
@@ -325,7 +326,7 @@ const Dashboard = () => {
           </div>
 
           {/* Other sections of the dashboard */}
-          </div>
+        </div>
         <div className="right-panel">
           <div className="panel-section new-users">
             <div className="panel-header">
@@ -337,10 +338,10 @@ const Dashboard = () => {
             </div>
             <div className="panel-frame">
               <ul className="user-list">
-                {dashboardData.newUsersList.map((user, index) => (
+                {dashboardData.newUsersList.slice(0, 10).map((user, index) => (
                   <li key={index} className="user-item">
                     <img src={`${process.env.PUBLIC_URL}/profile-picture.png`} alt="Profile" className="profile-picture" />
-                    <span className="username">{user}</span>
+                    <span className="username">{user.username}</span>
                   </li>
                 ))}
               </ul>
@@ -357,10 +358,10 @@ const Dashboard = () => {
             </div>
             <div className="panel-frame">
               <ul className="user-list">
-                {dashboardData.leaderboardList.map((leader, index) => (
+                {dashboardData.leaderboardList.slice(0, 10).map((leader, index) => (
                   <li key={index} className="user-item">
                     <img src={`${process.env.PUBLIC_URL}/profile-picture.png`} alt="Profile" className="profile-picture" />
-                    <span className="username">{leader}</span>
+                    <span className="username">{leader.username}</span>
                   </li>
                 ))}
               </ul>
