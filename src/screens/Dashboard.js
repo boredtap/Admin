@@ -29,65 +29,34 @@ const Dashboard = () => {
     leaderboardList: []
   });
 
-
-const fetchData = async (url, key) => {
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`Error fetching ${key}: ${response.statusText}`);
-    }
-    const data = await response.json();
-    if (key === 'leaderboardList' || key === 'newUsersList') {
-      if (Array.isArray(data[key])) {
-        setDashboardData(prev => ({ ...prev, [key]: data[key] }));
-      } else if (Array.isArray(data)) {
-        setDashboardData(prev => ({ ...prev, [key]: data }));
-      } else {
-        console.error(`Data for ${key} is not an array`, data);
-        setDashboardData(prev => ({ ...prev, [key]: [] }));
+  const fetchData = async (url, key) => {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Error fetching ${key}: ${response.statusText}`);
       }
-    } else if (typeof data === 'object' && data.hasOwnProperty(key)) {
-      if (typeof data[key] === 'object') {
-        const numericalValue = data[key].value || data[key].count || null;
-        if (numericalValue !== null && !isNaN(numericalValue)) {
-          setDashboardData(prev => ({ ...prev, [key]: numericalValue }));
-        } else {
-          console.error(`Could not extract numerical value for ${key}`, data[key]);
-          setDashboardData(prev => ({ ...prev, [key]: 0 }));
-        }
-      } else if (!isNaN(data[key])) {
-        setDashboardData(prev => ({ ...prev, [key]: data[key] }));
-      } else {
-        console.error(`Value for ${key} is not a number`, data[key]);
-        setDashboardData(prev => ({ ...prev, [key]: 0 }));
-      }
-    } else if (!isNaN(data)) {
-      setDashboardData(prev => ({ ...prev, [key]: data }));
-    } else {
-      console.error(`Data for ${key} is not an object or a number`, data);
-      setDashboardData(prev => ({ ...prev, [key]: 0 }));
+      const data = await response.json();
+      setDashboardData(prev => ({ ...prev, [key]: data[key] !== undefined ? data[key] : data }));
+    } catch (error) {
+      console.error(`Error fetching ${key}:`, error);
     }
-  } catch (error) {
-    console.error(`Error fetching ${key}:`, error);
-    setDashboardData(prev => ({ ...prev, [key]: key === 'leaderboardList' || key === 'newUsersList' ? [] : 0 }));
-  }
-};
+  };
 
   useEffect(() => {
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_new_users', 'newUsers');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coin_earned', 'totalCoinEarned');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/token_distributed_percentage', 'tokenDistributedPercentage');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coins_earned', 'totalCoinEarned');
+    // fetchData('https://bored-tap-api.onrender.com/admin/dashboard/token_distributed_percentage', 'tokenDistributedPercentage');
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_coin_earned_monthly', 'totalCoinEarnedMonthly');
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_users_monthly', 'totalUsersMonthly');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/user_levels', 'userLevels');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/wallet_connections', 'walletConnections');
+    // fetchData('https://bored-tap-api.onrender.com/admin/dashboard/user_levels', 'userLevels');
+    // fetchData('https://bored-tap-api.onrender.com/admin/dashboard/wallet_connections', 'walletConnections');
     fetchData('https://bored-tap-api.onrender.com/admin/dashboard/new_users', 'newUsersList');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/leaderboard_list', 'leaderboardList');
+    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/leaderboard', 'leaderboardList');
   }, []);
 
   useEffect(() => {
@@ -265,7 +234,7 @@ const fetchData = async (url, key) => {
                     <img src={`${process.env.PUBLIC_URL}/ArrowRise.png`} alt="Increment" className="frame-percentage-icon" />
                   </span>
                 </div>
-                <div className="frame-value">{dashboardData.totalUsers.toLocaleString()}</div>
+                <div className="frame-value">{dashboardData.totalUsers.total_users}</div>
                 <div className="frame-title">Total Users</div>
               </div>
 
@@ -278,7 +247,7 @@ const fetchData = async (url, key) => {
                     <img src={`${process.env.PUBLIC_URL}/ArrowRise.png`} alt="Increment" className="frame-percentage-icon" />
                   </span>
                 </div>
-                <div className="frame-value">{dashboardData.newUsers.toLocaleString()}</div>
+                <div className="frame-value">{dashboardData.newUsers.total_new_users}</div>
                 <div className="frame-title">Total New Users</div>
               </div>
 
@@ -291,7 +260,7 @@ const fetchData = async (url, key) => {
                     <img src={`${process.env.PUBLIC_URL}/ArrowFall.png`} alt="Decrement" className="frame-percentage-icon" />
                   </span>
                 </div>
-                <div className="frame-value">{dashboardData.totalCoinEarned.toLocaleString()}</div>
+                <div className="frame-value">{dashboardData.totalCoinEarned.overall_total_coins}</div>
                 <div className="frame-title">Total Coin Earned</div>
               </div>
 
