@@ -43,7 +43,7 @@ const SignIn = ({ onSignInSuccess }) => {
     <div className="sign-in-container">
       <div className="header">
         <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" className="logo" />
-        <h1 className="app-name">BoredTap App</h1>
+        <h1 className="app-name2">BoredTap App</h1>
       </div>
       <h2 className="welcome-text">Welcome Admin!</h2>
       <form onSubmit={handleSignIn}>

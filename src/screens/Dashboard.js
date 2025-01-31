@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
@@ -26,40 +26,64 @@ const Dashboard = () => {
     userLevels: [],
     walletConnections: [],
     newUsersList: [],
-    leaderboardList: []
+    leaderboardList: [],
+    recentCoinActivity: [],
+    recentUserActivity: []
   });
 
-  const fetchData = async (url, key) => {
+  const isTokenExpired = (token) => {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 < Date.now();
+  };
+
+  const fetchData = useCallback(async (url, key) => {
     try {
+      const token = localStorage.getItem('access_token');
+      if (!token || isTokenExpired(token)) {
+        throw new Error('Token expired or not found');
+      }
       const response = await fetch(url, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
       if (!response.ok) {
         throw new Error(`Error fetching ${key}: ${response.statusText}`);
       }
       const data = await response.json();
-      setDashboardData(prev => ({ ...prev, [key]: data[key] !== undefined ? data[key] : data }));
+      console.log(`Fetched ${key}:`, data); // Log fetched data
+      setDashboardData(prev => ({ ...prev, [key]: data }));
     } catch (error) {
       console.error(`Error fetching ${key}:`, error);
+      if (error.message === 'Token expired or not found' || error.message.includes('401')) {
+        navigate('/signin');
+      }
     }
-  };
+  }, [navigate]);
 
   useEffect(() => {
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_new_users', 'newUsers');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coins_earned', 'totalCoinEarned');
-    // fetchData('https://bored-tap-api.onrender.com/admin/dashboard/token_distributed_percentage', 'tokenDistributedPercentage');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_coin_earned_monthly', 'totalCoinEarnedMonthly');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_users_monthly', 'totalUsersMonthly');
-    // fetchData('https://bored-tap-api.onrender.com/admin/dashboard/user_levels', 'userLevels');
-    // fetchData('https://bored-tap-api.onrender.com/admin/dashboard/wallet_connections', 'walletConnections');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/new_users', 'newUsersList');
-    fetchData('https://bored-tap-api.onrender.com/admin/dashboard/leaderboard', 'leaderboardList');
-  }, []);
+    const token = localStorage.getItem('access_token');
+    if (!token || isTokenExpired(token)) {
+      navigate('/signin');
+    } else {
+      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
+      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_new_users', 'newUsers');
+      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coins_earned', 'totalCoinEarned');
+      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/new_users', 'newUsersList');
+      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/leaderboard', 'leaderboardList');
+      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/coins/recent_activity', 'recentCoinActivity');
+      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/users/recent_activity', 'recentUserActivity');
+      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/levels/chart_data', 'userLevels');
+    }
+  }, [fetchData, navigate]);
 
   useEffect(() => {
+    console.log('Recent Coin Activity:', dashboardData.recentCoinActivity);
+    console.log('Recent User Activity:', dashboardData.recentUserActivity);
+
+    const coinActivityData = dashboardData.recentCoinActivity.map(item => item.data);
+    const userActivityData = dashboardData.recentUserActivity.map(item => item.data);
+
     // Recent Activities Line Chart
     const ctx = document.getElementById('recent-activities-graph').getContext('2d');
 
@@ -74,7 +98,7 @@ const Dashboard = () => {
         datasets: [
           {
             label: 'Total Coin Earned',
-            data: dashboardData.totalCoinEarnedMonthly,
+            data: coinActivityData,
             borderColor: 'orange',
             borderWidth: 1,
             fill: false,
@@ -82,7 +106,7 @@ const Dashboard = () => {
           },
           {
             label: 'Total Users',
-            data: dashboardData.totalUsersMonthly,
+            data: userActivityData,
             borderColor: 'green',
             borderWidth: 1,
             fill: false,
@@ -103,15 +127,27 @@ const Dashboard = () => {
           y: {
             title: {
               display: true,
-              text: 'Millions',
+              text: 'Count',
             },
             ticks: {
-              callback: (value) => `${value}M`,
+              callback: (value) => `${value}`,
             },
           },
         },
       },
     });
+
+    // Cleanup charts when component unmounts
+    return () => {
+      if (recentActivitiesChartRef.current) {
+        recentActivitiesChartRef.current.destroy();
+      }
+    };
+  }, [dashboardData.recentCoinActivity, dashboardData.recentUserActivity]);
+
+  useEffect(() => {
+    const userLevelData = dashboardData.userLevels.map(item => item.total_users);
+    const userLevelLabels = dashboardData.userLevels.map(item => item.level_name);
 
     // User Level Bar Chart
     const userLevelCtx = document.getElementById('user-level-chart').getContext('2d');
@@ -123,26 +159,15 @@ const Dashboard = () => {
     userLevelChartRef.current = new Chart(userLevelCtx, {
       type: 'bar',
       data: {
-        labels: [
-          'Novice',
-          'Explorer',
-          'Apprentice',
-          'Warrior',
-          'Master',
-          'Champion',
-          'Tactician', 
-          'Specialist',
-          'Conqueror',
-          'Legend'
-        ],
+        labels: userLevelLabels,
         datasets: [{
-          label: 'Number of Users (in Millions)',
-          data: dashboardData.userLevels,
+          label: 'Number of Users',
+          data: userLevelData,
           backgroundColor: '#79797A',
           borderColor: '#79797A',
-          borderWidth: 25,
+          borderWidth: 6,
           borderRadius: 4,
-          barPercentage: 0.6, // Increased from 0.25 to make bars wider
+          barPercentage: 0.1, // Increased from 0.25 to make bars wider
           categoryPercentage: 0.8 // Added to increase bar width
         }],
       },
@@ -160,7 +185,7 @@ const Dashboard = () => {
             beginAtZero: true,
             ticks: {
               callback: function(value) {
-                return value + 'M';
+                return value;
               }
             }
           }
@@ -173,49 +198,14 @@ const Dashboard = () => {
       },
     });
 
-    // Wallet Connection Doughnut Chart
-    const walletConnectionCtx = document.getElementById('wallet-connection-chart').getContext('2d');
-
-    if (walletConnectionChartRef.current) {
-      walletConnectionChartRef.current.destroy();
-    }
-
-    walletConnectionChartRef.current = new Chart(walletConnectionCtx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Wallet Connected', 'No Wallet Connected'],
-        datasets: [{
-          data: dashboardData.walletConnections,
-          backgroundColor: ['#00FF00', '#FF0000'], // Green and Red
-          borderWidth: 5, // Increased border width for a thicker line
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '50%', // Reduced cutout to make donut fatter
-        plugins: {
-          legend: {
-            display: false,
-          },
-        },
-      },
-    });
-
     // Cleanup charts when component unmounts
     return () => {
-      if (recentActivitiesChartRef.current) {
-        recentActivitiesChartRef.current.destroy();
-      }
       if (userLevelChartRef.current) {
         userLevelChartRef.current.destroy();
       }
-      if (walletConnectionChartRef.current) {
-        walletConnectionChartRef.current.destroy();
-      }
     };
-  }, [dashboardData]);
-
+  }, [dashboardData.userLevels]);
+  
   return (
     <div className="dashboard">
       <NavigationPanel />
@@ -307,19 +297,11 @@ const Dashboard = () => {
                 <canvas id="user-level-chart"></canvas>
               </div>
             </div>
-            <div className="wallet-connection-frame">
+            <div className="wallet-connection-frame dormant">
               <h2 className="section-title">Wallet Connection</h2>
               <div className="small-frame">
-                <canvas id="wallet-connection-chart"></canvas>
-                <div className="wallet-connection-legend">
-                  <div className="legend-item">
-                    <span className="dot green"></span>
-                    <span className="legend-text">Wallet Connected</span>
-                  </div>
-                  <div className="legend-item">
-                    <span className="dot red"></span>
-                    <span className="legend-text">No Wallet Connected</span>
-                  </div>
+                <div className="coming-soon">
+                  <span>Coming Soon</span>
                 </div>
               </div>
             </div>
