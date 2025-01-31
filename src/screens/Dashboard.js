@@ -36,11 +36,41 @@ const Dashboard = () => {
     return payload.exp * 1000 < Date.now();
   };
 
+  const refreshToken = useCallback(async () => {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      const response = await fetch('https://bored-tap-api.onrender.com/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken,
+          client_id: 'string',
+          client_secret: 'string',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('access_token', data.access_token);
+        return data.access_token;
+      } else {
+        throw new Error('Failed to refresh token');
+      }
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      navigate('/signin');
+    }
+  }, [navigate]);
+
   const fetchData = useCallback(async (url, key) => {
     try {
-      const token = localStorage.getItem('access_token');
+      let token = localStorage.getItem('access_token');
       if (!token || isTokenExpired(token)) {
-        throw new Error('Token expired or not found');
+        token = await refreshToken();
+        if (!token) return;
       }
       const response = await fetch(url, {
         headers: {
@@ -59,12 +89,23 @@ const Dashboard = () => {
         navigate('/signin');
       }
     }
-  }, [navigate]);
+  }, [navigate, refreshToken]);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (!token || isTokenExpired(token)) {
-      navigate('/signin');
+      refreshToken().then(newToken => {
+        if (newToken) {
+          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
+          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_new_users', 'newUsers');
+          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coins_earned', 'totalCoinEarned');
+          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/new_users', 'newUsersList');
+          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/leaderboard', 'leaderboardList');
+          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/coins/recent_activity', 'recentCoinActivity');
+          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/users/recent_activity', 'recentUserActivity');
+          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/levels/chart_data', 'userLevels');
+        }
+      });
     } else {
       fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
       fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_new_users', 'newUsers');
@@ -75,7 +116,7 @@ const Dashboard = () => {
       fetchData('https://bored-tap-api.onrender.com/admin/dashboard/users/recent_activity', 'recentUserActivity');
       fetchData('https://bored-tap-api.onrender.com/admin/dashboard/levels/chart_data', 'userLevels');
     }
-  }, [fetchData, navigate]);
+  }, [fetchData, navigate, refreshToken]);
 
   useEffect(() => {
     console.log('Recent Coin Activity:', dashboardData.recentCoinActivity);
