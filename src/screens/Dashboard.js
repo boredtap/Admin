@@ -340,7 +340,7 @@ const Dashboard = () => {
               <ul className="user-list">
                 {dashboardData.newUsersList.slice(0, 10).map((user, index) => (
                   <li key={index} className="user-item">
-                    <img src={`${process.env.PUBLIC_URL}/profile-picture.png`} alt="Profile" className="profile-picture" />
+                    <img src={user.image_url} alt="Profile" className="profile-picture" />
                     <span className="username">{user.username}</span>
                   </li>
                 ))}
@@ -360,7 +360,7 @@ const Dashboard = () => {
               <ul className="user-list">
                 {dashboardData.leaderboardList.slice(0, 10).map((leader, index) => (
                   <li key={index} className="user-item">
-                    <img src={`${process.env.PUBLIC_URL}/profile-picture.png`} alt="Profile" className="profile-picture" />
+                    <img src={leader.image_url} alt="Profile" className="profile-picture" />
                     <span className="username">{leader.username}</span>
                   </li>
                 ))}

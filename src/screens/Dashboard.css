@@ -1,8 +1,9 @@
 .dashboard {
   display: flex;
   background-color: #19191A;
-  min-height: 100vh;
+  height: 100vh; /* Ensure it takes up the full viewport height */
   width: 100%;
+  overflow: hidden; /* Prevent unwanted scroll bars */
 }
 
 .main-wrapper {
@@ -12,6 +13,8 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
+  height: calc(100vh - 96px); /* Adjust height to fit within the viewport */
+  overflow: auto; /* Allow scrolling within the main content */
 }
 
 .main-content {
@@ -283,7 +286,7 @@
 .user-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   margin-bottom: 10px;
 }
 
