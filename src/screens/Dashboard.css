@@ -1,3 +1,11 @@
+/* Ensure the html and body take up the full height of the viewport */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* Prevent unwanted scroll bars */
+}
+
+
 .dashboard {
   display: flex;
   background-color: #19191A;
@@ -300,6 +308,8 @@
   font-size: 14px;
   color: white;
 }
+
+
 
 /* Responsive Design */
 @media screen and (max-width: 1200px) {
