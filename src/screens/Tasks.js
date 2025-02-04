@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import CreateTaskOverlay from '../components/CreateTaskOverlay';
@@ -19,6 +19,9 @@ const Tasks = () => {
   const [showCreateTaskOverlay, setShowCreateTaskOverlay] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [filters, setFilters] = useState({
     status: {
@@ -30,7 +33,9 @@ const Tasks = () => {
       'In-Game': false,
       'Special': false,
       'Social': false
-    }
+    },
+    showStatus: false,
+    showType: false
   });
 
   const [tasksData, setTasksData] = useState({
@@ -40,13 +45,118 @@ const Tasks = () => {
     "Social": []
   });
 
+  // Combine fetchTasksData and fetchFilteredTasks into one function
+  const fetchTasks = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    const params = new URLSearchParams();
+    
+    // Add filter conditions
+    Object.entries(filters.status).forEach(([status, isChecked]) => {
+      if (isChecked) params.append('status', status);
+    });
+    
+    Object.entries(filters.type).forEach(([type, isChecked]) => {
+      if (isChecked) params.append('type', type.toLowerCase());
+    });
+  
+    if (searchTerm) params.append('search', searchTerm);
+    
+    try {
+      const response = await fetch(
+        `https://bored-tap-api.onrender.com/admin/task/all_tasks?${params.toString()}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch tasks');
+      }
+  
+      const data = await response.json();
+      
+      setTasksData({
+        "All Tasks": data,
+        "In-Game": data.filter(task => task.task_type === 'in-game'),
+        "Special": data.filter(task => task.task_type === 'special'),
+        "Social": data.filter(task => task.task_type === 'social')
+      });
+    } catch (error) {
+      setError(error.message);
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters, searchTerm]); // Add dependencies here
+  
+
+  // Use effect to fetch data when filters or search term change
   useEffect(() => {
-    // Fetch data from backend
-    fetch('/api/tasks-data')
-      .then(response => response.json())
-      .then(data => setTasksData(data))
-      .catch(error => console.error('Error fetching tasks data:', error));
-  }, []);
+    fetchTasks();
+  }, [filters, searchTerm, fetchTasks]);
+
+  const handleEditTask = async (task) => {
+    setShowActionDropdown(null);
+    try {
+      const response = await fetch(
+        `https://bored-tap-api.onrender.com/admin/task/tasks_by_id?task_id=${task.id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch task details');
+      }
+
+      const fullTaskDetails = await response.json();
+      setTaskToEdit(fullTaskDetails);
+      setShowCreateTaskOverlay(true);
+    } catch (error) {
+      console.error('Error fetching task details:', error);
+      // Show error to user
+    }
+  };
+
+  const handleSubmitTask = async (taskData) => {
+    try {
+      const endpoint = taskData.id 
+        ? 'https://bored-tap-api.onrender.com/admin/task/update_task' 
+        : 'https://bored-tap-api.onrender.com/admin/task/create_task';
+      
+      const formData = new FormData();
+      Object.entries(taskData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formData.append(key, value);
+        }
+      });
+  
+      const response = await fetch(endpoint, {
+        method: taskData.id ? 'PUT' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: formData
+      });
+  
+      if (!response.ok) {
+        throw new Error('Task submission failed');
+      }
+  
+      // Refresh the task list after successful submission
+      await fetchTasks();
+      setShowCreateTaskOverlay(false);
+    } catch (error) {
+      console.error('Task submission error:', error);
+      // Show error to user
+    }
+  };
 
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
@@ -76,7 +186,9 @@ const Tasks = () => {
   };
 
   const handleDateSelect = (date) => {
-    setSelectedDate(date);
+    if (date) {
+      setSelectedDate(date);
+    }
     setShowDatePicker(false);
   };
 
@@ -93,9 +205,9 @@ const Tasks = () => {
     return (
       <div className="custom-date-picker">
         <div className="date-picker-header">
-          <button onClick={() => changeMonth(-1)}>&lt;</button>
+          <button onClick={() => changeMonth(-1)}></button>
           <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
-          <button onClick={() => changeMonth(1)}>&gt;</button>
+          <button onClick={() => changeMonth(1)}></button>
         </div>
         <div className="weekdays">
           {weekDays.map(day => (
@@ -150,21 +262,59 @@ const Tasks = () => {
     });
   };
 
-  const handleRowClick = (index, event) => {
+  const handleRowClick = (taskId, event) => {
     event.stopPropagation();
     setSelectedRows(prev => {
-      if (prev.includes(index)) {
-        return prev.filter(row => row !== index);
+      if (prev.includes(taskId)) {
+        return prev.filter(row => row !== taskId);
       } else {
-        return [...prev, index];
+        return [...prev, taskId];
       }
     });
   };
 
-  const handleActionClick = (index, event) => {
+  const handleActionClick = (index, event, task) => {
     event.stopPropagation();
-    setShowActionDropdown(showActionDropdown === index ? null : index);
+    setShowActionDropdown(prevIndex => {
+      if (prevIndex === index) {
+        // If clicking the same dropdown, close it
+        return null;
+      } else {
+        // If clicking a different dropdown, close the previous one and open the new one
+        return index;
+      }
+    });
   };
+
+  const handleDeleteTask = async (task) => {
+    setShowActionDropdown(null);
+    setShowDeleteOverlay(true);
+    setSelectedRows([task.id]);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showActionDropdown !== null) {
+        const actionCells = document.querySelectorAll('.table-cell.action-cell');
+        let clickedInsideActionCell = false;
+        actionCells.forEach(actionCell => {
+          if (actionCell.contains(event.target)) {
+            clickedInsideActionCell = true;
+          }
+        });
+        if (!clickedInsideActionCell) {
+          setShowActionDropdown(null);
+        }
+      }
+    };
+  
+    document.addEventListener('click', handleClickOutside);
+  
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showActionDropdown]);
+
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -177,51 +327,41 @@ const Tasks = () => {
     setCurrentPage(1);
   };
 
-  const handleDelete = () => {
-    const updatedData = tasksData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    setTasksData(prev => ({
-      ...prev,
-      [activeTab]: updatedData
-    }));
-    setSelectedRows([]);
+  const handleDelete = async () => {
+    try {
+      const taskIdsToDelete = selectedRows;
+      await Promise.all(taskIdsToDelete.map(taskId => 
+        fetch(`https://bored-tap-api.onrender.com/admin/task/delete_task?task_id=${taskId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        })
+      ));
+      // Changed fetchTasksData to fetchTasks
+      fetchTasks();
+      setSelectedRows([]);
+      setShowDeleteOverlay(false);
+    } catch (error) {
+      console.error('Error deleting tasks:', error);
+    }
   };
+
+
 
   const handleCreateTask = () => {
     setTaskToEdit(null);
     setShowCreateTaskOverlay(true);
   };
 
-  const handleEditTask = (task) => {
-    setTaskToEdit(task);
-    setShowCreateTaskOverlay(true);
-  };
-
-  const handleSubmitTask = (task) => {
-    if (taskToEdit) {
-      // Update existing task
-      const updatedData = tasksData[activeTab].map(t => t.id === task.id ? task : t);
-      setTasksData(prev => ({
-        ...prev,
-        [activeTab]: updatedData
-      }));
-    } else {
-      // Create new task
-      setTasksData(prev => ({
-        ...prev,
-        [activeTab]: [...prev[activeTab], task]
-      }));
-    }
-    setShowCreateTaskOverlay(false);
-  };
-
   const handleExport = () => {
     const dataToExport = filteredData.map(task => ({
-      'Task Name': task.name,
-      'Task Type': task.type,
-      'Description': task.description,
-      'Status': task.status,
-      'Reward': task.reward,
-      'Participants': task.participants,
+      'Task Name': task.task_name,
+      'Task Type': task.task_type,
+      'Description': task.task_description,
+      'Status': task.task_status,
+      'Reward': task.task_reward,
+      'Participants': task.task_participants,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -231,10 +371,9 @@ const Tasks = () => {
   };
 
   const filteredData = tasksData[activeTab].filter(task => {
-    const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && task.status === status);
-    const typeMatch = Object.keys(filters.type).some(type => filters.type[type] && task.type === type);
-    return (!Object.values(filters.status).includes(true) || statusMatch) &&
-           (!Object.values(filters.type).includes(true) || typeMatch);
+    const statusMatch = !Object.values(filters.status).some(Boolean) || filters.status[task.task_status];
+    const typeMatch = !Object.values(filters.type).some(Boolean) || filters.type[task.task_type];
+    return statusMatch && typeMatch;
   });
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
@@ -246,229 +385,257 @@ const Tasks = () => {
       <div className="main-wrapper">
         <AppBar screenName="Tasks" />
         <div className="tasks-body-frame">
-          {/* Pagination Section */}
-          <div className="tasks-header">
-            <div className="tasks-pagination">
-              <span className={`pagination-item ${activeTab === "All Tasks" ? "active" : ""}`} onClick={() => handleTabChange("All Tasks")}>All Tasks</span>
-              <span className={`pagination-item ${activeTab === "In-Game" ? "active" : ""}`} onClick={() => handleTabChange("In-Game")}>In-Game</span>
-              <span className={`pagination-item ${activeTab === "Special" ? "active" : ""}`} onClick={() => handleTabChange("Special")}>Special</span>
-              <span className={`pagination-item ${activeTab === "Social" ? "active" : ""}`} onClick={() => handleTabChange("Social")}>Social</span>
-            </div>
-            <div className="tasks-buttons">
-              <button className="btn export-btn" onClick={handleExport}>
-                <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
-                Export
-              </button>
-              <button className="btn create-btn" onClick={handleCreateTask}>
-                <img src={`${process.env.PUBLIC_URL}/create.png`} alt="Create Tasks" className="btn-icon" />
-                Create Tasks
-              </button>
-            </div>
-          </div>
+          {/* Show loading state */}
+          {loading && <div className="loading">Loading tasks...</div>}
+          
+          {/* Show error state */}
+          {error && <div className="error">Error: {error}</div>}
+          
+          {/* Only show content when not loading and no error */}
+          {!loading && !error && (
+            <>
+              <div className="tasks-content">
+                {/* Pagination Section */}
+                <div className="tasks-header">
+                  <div className="tasks-pagination">
+                    <span className={`pagination-item ${activeTab === "All Tasks" ? "active" : ""}`} onClick={() => handleTabChange("All Tasks")}>All Tasks</span>
+                    <span className={`pagination-item ${activeTab === "In-Game" ? "active" : ""}`} onClick={() => handleTabChange("In-Game")}>In-Game</span>
+                    <span className={`pagination-item ${activeTab === "Special" ? "active" : ""}`} onClick={() => handleTabChange("Special")}>Special</span>
+                    <span className={`pagination-item ${activeTab === "Social" ? "active" : ""}`} onClick={() => handleTabChange("Social")}>Social</span>
+                  </div>
+                  <div className="tasks-buttons">
+                    <button className="btn export-btn" onClick={handleExport}>
+                      <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
+                      Export
+                    </button>
+                    <button className="btn create-btn" onClick={handleCreateTask}>
+                      <img src={`${process.env.PUBLIC_URL}/create.png`} alt="Create Tasks" className="btn-icon" />
+                      Create Tasks
+                    </button>
+                  </div>
+                </div>
 
-          <div className="tasks-divider"></div>
+                <div className="tasks-divider"></div>
 
-          {/* Search Bar and Buttons */}
-          <div className="tasks-toolbar">
-            <div className="search-bar">
-              <img src={`${process.env.PUBLIC_URL}/search.png`} alt="Search" className="search-icon" />
-              <input type="text" placeholder="Search by type, status...." className="search-input" />
-              <img 
-                src={`${process.env.PUBLIC_URL}/filter.png`} 
-                alt="Filter" 
-                className="filter-icon"
-                onClick={handleFilterClick}
-              />
-              {showFilterDropdown && (
-                <div className="filter-dropdown">
-                  <div className="filter-section">
-                    <div className="filter-header" onClick={() => setFilters(prev => ({ ...prev, showStatus: !prev.showStatus }))}>
-                      <span>Task Status</span>
-                      <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" />
-                    </div>
-                    {filters.showStatus && (
-                      <div className="filter-options">
-                        {Object.keys(filters.status).map(status => (
-                          <label key={status} className="filter-option">
-                            <input
-                              type="checkbox"
-                              checked={filters.status[status]}
-                              onChange={() => handleFilterChange('status', status)}
-                            />
-                            <span>{status}</span>
-                          </label>
-                        ))}
+                {/* Search Bar and Buttons */}
+                <div className="tasks-toolbar">
+                  <div className="search-bar">
+                    <img src={`${process.env.PUBLIC_URL}/search.png`} alt="Search" className="search-icon" />
+                    <input 
+                      type="text" 
+                      placeholder="Search by type, status...." 
+                      className="search-input"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <img 
+                      src={`${process.env.PUBLIC_URL}/filter.png`} 
+                      alt="Filter" 
+                      className="filter-icon"
+                      onClick={handleFilterClick}
+                    />
+                    {showFilterDropdown && (
+                      <div className="filter-dropdown">
+                        <div className="filter-section">
+                          <div className="filter-header" onClick={() => setFilters(prev => ({ ...prev, showStatus: !prev.showStatus }))}>
+                            <span>Task Status</span>
+                            <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" />
+                          </div>
+                          {filters.showStatus && (
+                            <div className="filter-options">
+                              {Object.keys(filters.status).map(status => (
+                                <label key={status} className="filter-option">
+                                  <input
+                                    type="checkbox"
+                                    checked={filters.status[status]}
+                                    onChange={() => handleFilterChange('status', status)}
+                                  />
+                                  <span>{status}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="filter-section">
+                          <div className="filter-header" onClick={() => setFilters(prev => ({ ...prev, showType: !prev.showType }))}>
+                            <span>Task Type</span>
+                            <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" />
+                          </div>
+                          {filters.showType && (
+                            <div className="filter-options">
+                              {Object.keys(filters.type).map(type => (
+                                <label key={type} className="filter-option">
+                                  <input
+                                    type="checkbox"
+                                    checked={filters.type[type]}
+                                    onChange={() => handleFilterChange('type', type)}
+                                  />
+                                  <span>{type}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button className="clear-filters" onClick={clearFilters}>
+                          <span>Clear selection</span>
+                        </button>
                       </div>
                     )}
                   </div>
-                  <div className="filter-section">
-                    <div className="filter-header" onClick={() => setFilters(prev => ({ ...prev, showType: !prev.showType }))}>
-                      <span>Task Type</span>
-                      <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" />
+                  <div className="toolbar-buttons">
+                    <div className="date-picker-wrapper">
+                      <button className="btn date-btn" onClick={() => setShowDatePicker(!showDatePicker)}>
+                        <img src={`${process.env.PUBLIC_URL}/date.png`} alt="Date" className="btn-icon" />
+                        {formatDate(selectedDate)}
+                      </button>
+                      {showDatePicker && (
+                        <div className="date-picker-container">
+                          <CustomDatePicker />
+                        </div>
+                      )}
                     </div>
-                    {filters.showType && (
-                      <div className="filter-options">
-                        {Object.keys(filters.type).map(type => (
-                          <label key={type} className="filter-option">
-                            <input
-                              type="checkbox"
-                              checked={filters.type[type]}
-                              onChange={() => handleFilterChange('type', type)}
-                            />
-                            <span>{type}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
+                    <button className="btn delete-btn" onClick={() => setShowDeleteOverlay(true)}>
+                      <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
+                      Delete
+                    </button>
                   </div>
-                  <button className="clear-filters" onClick={clearFilters}>
-                    <span>Clear selection</span>
-                  </button>
+                </div>
+
+                <div className="tasks-divider"></div>
+
+                {/* Table Header */}
+                <div className="tasks-table-header">
+                  <div className="table-heading radio-column">
+                    <div className="custom-radio"></div>
+                  </div>
+                  <div className="table-heading">Task Name</div>
+                  <div className="table-heading">Task Type</div>
+                  <div className="table-heading">Description</div>
+                  <div className="table-heading">Status</div>
+                  <div className="table-heading">Reward</div>
+                  <div className="table-heading">Participants</div>
+                  <div className="table-heading action-heading"><span>Action</span></div>
+                </div>
+
+                <div className="tasks-divider"></div>
+
+                {/* Table Rows */}
+                {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((task, index) => (
+                  <div
+                    key={task.id}
+                    className={`tasks-table-row ${selectedRows.includes(task.id) ? "selected" : ""}`}
+                    onClick={(e) => handleRowClick(task.id, e)}
+                  >
+                    <div className="table-cell radio-column">
+                      <div className={`custom-radio ${selectedRows.includes(task.id) ? "selected" : ""}`}></div>
+                    </div>
+                    <div className="table-cell">{task.task_name}</div>
+                    <div className="table-cell">{task.task_type}</div>
+                    <div className="table-cell">{task.task_description}</div>
+                    <div className="table-cell">
+                      <span className={`status-btn ${task.task_status ? task.task_status.toLowerCase() : ''}`}>
+                        {task.task_status}
+                      </span>
+                    </div>
+                    <div className="table-cell reward-cell">
+                      <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Reward" className="reward-icon" />
+                      {task.task_reward}
+                    </div>
+                    <div className="table-cell">{task.task_participants}</div>
+                    <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e, task)}>
+                      <span>Action</span>
+                      <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
+                      {showActionDropdown === index && (
+                        <div className="action-dropdown">
+                          <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); handleEditTask(task); }}>
+                            <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
+                            <span>Edit</span>
+                          </div>
+                          <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); handleDeleteTask(task); }}>
+                            <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
+                            <span>Delete</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                <div className="tasks-divider"></div>
+
+                {/* Footer with Pagination */}
+                <div className="table-footer">
+                  <div className="rows-per-page">
+                    <span>Show Result:</span>
+                    <select value={rowsPerPage} onChange={handleRowsPerPageChange}>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                        <option key={num} value={num}>{num}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="pagination-controls">
+                    <img
+                      src={`${process.env.PUBLIC_URL}/back-arrow.png`}
+                      alt="Previous"
+                      className="pagination-arrow"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    />
+                    <div className="page-numbers">
+                      {pageNumbers.map(num => (
+                        <span
+                          key={num}
+                          className={`page-number ${currentPage === num ? 'active' : ''}`}
+                          onClick={() => setCurrentPage(num)}
+                        >
+                          {num}
+                        </span>
+                      ))}
+                    </div>
+                    <img
+                      src={`${process.env.PUBLIC_URL}/front-arrow.png`}
+                      alt="Next"
+                      className="pagination-arrow"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Overlays */}
+              {showCreateTaskOverlay && (
+                <CreateTaskOverlay 
+                  onClose={() => setShowCreateTaskOverlay(false)}
+                  taskToEdit={taskToEdit}
+                  onSubmit={handleSubmitTask}
+                />
+              )}
+
+              {showDeleteOverlay && (
+                <div className="overlay-backdrop">
+                  <div className="overlay-content">
+                    <center>
+                      <img
+                        src={`${process.env.PUBLIC_URL}/Red Delete.png`}
+                        alt="Delete Icon"
+                        className="overlay-icon"
+                      />
+                    </center>
+                    <h2>Delete?</h2>
+                    <p>Are you sure to delete this task?</p>
+                    <button className="overlay-submit-button" onClick={handleDelete}>
+                      Delete
+                    </button>
+                    <button 
+                      className="overlay-back-link" 
+                      onClick={() => setShowDeleteOverlay(false)} 
+                      style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}
+                    >
+                      Back
+                    </button>
+                  </div>
                 </div>
               )}
-            </div>
-            <div className="toolbar-buttons">
-              <div className="date-picker-wrapper">
-                <button className="btn date-btn" onClick={() => setShowDatePicker(!showDatePicker)}>
-                  <img src={`${process.env.PUBLIC_URL}/date.png`} alt="Date" className="btn-icon" />
-                  {formatDate(selectedDate)}
-                </button>
-                {showDatePicker && (
-                  <div className="date-picker-container">
-                    <CustomDatePicker />
-                  </div>
-                )}
-              </div>
-              <button className="btn delete-btn" onClick={() => setShowDeleteOverlay(true)}>
-                <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
-                Delete
-              </button>
-            </div>
-          </div>
-
-          <div className="tasks-divider"></div>
-
-          {/* Table Header */}
-          <div className="tasks-table-header">
-            <div className="table-heading radio-column">
-              <div className="custom-radio"></div>
-            </div>
-            <div className="table-heading">Task Name</div>
-            <div className="table-heading">Task Type</div>
-            <div className="table-heading">Description</div>
-            <div className="table-heading">Status</div>
-            <div className="table-heading">Reward</div>
-            <div className="table-heading">Participants</div>
-            <div className="table-heading action-heading"> <span>Action</span></div>
-          </div>
-
-          <div className="tasks-divider"></div>
-
-          {/* Table Rows */}
-          {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((task, index) => (
-            <div
-              key={index}
-              className={`tasks-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
-              onClick={(e) => handleRowClick(index, e)}
-            >
-              <div className="table-cell radio-column">
-                <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
-              </div>
-              <div className="table-cell">{task.name}</div>
-              <div className="table-cell">{task.type}</div>
-              <div className="table-cell">{task.description}</div>
-              <div className="table-cell">
-                <span className={`status-btn ${task.status.toLowerCase()}`}>
-                  {task.status}
-                </span>
-              </div>
-              <div className="table-cell reward-cell">
-                <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Reward" className="reward-icon" />
-                {task.reward}
-              </div>
-              <div className="table-cell">{task.participants}</div>
-              <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
-                <span>Action</span>
-                <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
-                {showActionDropdown === index && (
-                  <div className="action-dropdown">
-                    <div className="dropdown-item" onClick={() => handleEditTask(task)}>
-                      <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
-                      <span>Edit</span>
-                    </div>
-                    <div className="dropdown-item" onClick={() => setShowDeleteOverlay(true)}>
-                      <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
-                      <span>Delete</span>
-                    </div>
-                  </div> 
-                )}
-              </div>
-            </div>
-          ))}
-
-          <div className="tasks-divider"></div>
-
-          {/* Footer with Pagination */}
-          <div className="table-footer">
-            <div className="rows-per-page">
-              <span>Show Result:</span>
-              <select value={rowsPerPage} onChange={handleRowsPerPageChange}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                  <option key={num} value={num}>{num}</option>
-                ))}
-              </select>
-            </div>
-            <div className="pagination-controls">
-              <img
-                src={`${process.env.PUBLIC_URL}/back-arrow.png`}
-                alt="Previous"
-                className="pagination-arrow"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              />
-              <div className="page-numbers">
-                {pageNumbers.map(num => (
-                  <span
-                    key={num}
-                    className={`page-number ${currentPage === num ? 'active' : ''}`}
-                    onClick={() => setCurrentPage(num)}
-                  >
-                    {num}
-                  </span>
-                ))}
-              </div>
-              <img
-                src={`${process.env.PUBLIC_URL}/front-arrow.png`}
-                alt="Next"
-                className="pagination-arrow"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              />
-            </div>
-          </div>
-          
-          {showCreateTaskOverlay && (
-            <CreateTaskOverlay 
-              onClose={() => setShowCreateTaskOverlay(false)}
-              taskToEdit={taskToEdit}
-              onSubmit={handleSubmitTask}
-            />
-          )}
-
-          {showDeleteOverlay && (
-         <div className="overlay-backdrop">
-          <div className="overlay-content">
-            <center><img
-              src={`${process.env.PUBLIC_URL}/Red Delete.png`}
-              alt="Delete Icon"
-              className="overlay-icon"
-            /></center>
-            <h2>Delete?</h2>
-            <p>Are you sure to delete this task?</p>
-            <button className="overlay-submit-button" onClick={handleDelete}>
-              Delete
-            </button>
-            <button className="overlay-back-link" onClick={() => setShowDeleteOverlay(false)} style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}>Back</button>
-            </div>
-            </div>
+            </>
           )}
         </div>
       </div>

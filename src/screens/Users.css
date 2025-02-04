@@ -265,13 +265,15 @@
   }
   
   
-  /* Action Section */
-  .action-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-  }
+/* Action Section */
+.action-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  position: relative; /* Added for dropdown positioning */
+  overflow: visible;
+}
   
   .dropdown-icon {
     width: 20px;

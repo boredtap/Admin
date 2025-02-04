@@ -62,7 +62,7 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Error refreshing token:', error);
-      navigate('/signin');
+      navigate('/');
     }
   }, [navigate]);
 
