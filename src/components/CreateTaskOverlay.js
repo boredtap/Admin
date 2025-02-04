@@ -23,14 +23,14 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
     }
   }, [taskToEdit]);
 
-  const taskTypes = ['In-Game', 'Special', 'Social'];
+  const taskTypes = ['in-game', 'special', 'social'];
   const participantLevels = [
-    'All Users', 'Novice-Lv 1', 'Explorer-Lv 2', 'Apprentice-Lv 3',
-    'Warrior-Lv 4', 'Master - Lv 5', 'Champion - Lv 6',
-    'Tactician- Lv 7', 'Specialist - Lv 8', 'Conqueror -Lv 9',
-    'Legend - Lv 10',
+    'all-users', 'novice', 'explorer', 'apprentice',
+    'warrior', 'master', 'champion',
+    'tactician', 'specialist', 'conqueror',
+    'legend',
   ];
-  const statusOptions = ['Active', 'Inactive', 'Pause'];
+  const statusOptions = ['active', 'inactive', 'pause'];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -52,9 +52,57 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setShowSuccessOverlay(true);
+    console.log('handleSubmit called');
+    console.log('formData before submission:', formData);
+  
+    try {
+      let queryParams = new URLSearchParams();
+      queryParams.append('task_name', formData.taskName);
+      queryParams.append('task_type', formData.taskType.toLowerCase());
+      queryParams.append('task_description', formData.description);
+      queryParams.append('task_status', formData.status);
+      queryParams.append('task_reward', formData.reward);
+      
+      // Format the date to ISO string if it's a Date object
+      if (formData.deadline instanceof Date) {
+        queryParams.append('task_deadline', formData.deadline.toISOString());
+      } else {
+        queryParams.append('task_deadline', formData.deadline); // Or handle it as a string if it's not a Date object
+      }
+  
+      const formDataBody = new FormData();
+      formDataBody.append('task_participants', formData.participants);
+      if (formData.image) {
+        formDataBody.append('task_image', formData.image);
+      }
+  
+      const urlWithQuery = `https://bored-tap-api.onrender.com/admin/task/create_task?${queryParams.toString()}`;
+      console.log('URL:', urlWithQuery);
+  
+      const response = await fetch(urlWithQuery, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: formDataBody,
+      });
+  
+      if (!response.ok) {
+        let errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+  
+      const savedTask = await response.json();
+      console.log('Success:', savedTask);
+      setShowSuccessOverlay(true);
+      onSubmit(savedTask);
+    } catch (error) {
+      console.error('Error:', error);
+      alert(error.message);
+    }
   };
-
+  
+  
   const handleDateChange = (date) => {
     setFormData((prev) => ({
       ...prev,
@@ -107,9 +155,9 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
     return (
       <div className="custom-date-picker">
         <div className="date-picker-header">
-          <button onClick={() => changeMonth(-1)}>&lt;</button>
+          <button onClick={() => changeMonth(-1)}>{'<'}</button>
           <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
-          <button onClick={() => changeMonth(1)}>&gt;</button>
+          <button onClick={() => changeMonth(1)}>{'>'}</button>
         </div>
         <div className="weekdays">
           {weekDays.map((day) => (
@@ -137,27 +185,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
     );
   };
 
-  const handleSuccessProceed = async () => {
-    const formDataToSend = new FormData();
-    Object.keys(formData).forEach(key => {
-      formDataToSend.append(key, formData[key]);
-    });
-
-    const response = await fetch('/api/tasks', {
-      method: taskToEdit ? 'PUT' : 'POST',
-      body: formDataToSend,
-    });
-
-    if (response.ok) {
-      const savedTask = await response.json();
-      onSubmit(savedTask);
-    } else {
-      console.error('Failed to save task');
-    }
-
-    setShowSuccessOverlay(false);
-    onClose();
-  };
+  // Remove handleSuccessProceed since we're now handling success in handleSubmit
 
   return (
     <div className="overlay-backdrop">
@@ -168,7 +196,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
             <img src={`${process.env.PUBLIC_URL}/cancel.png`} alt="Cancel" />
           </button>
         </div>
-
+  
         <form onSubmit={handleSubmit}>
           <div className="form-field">
             <label>Task Name</label>
@@ -180,7 +208,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
               onChange={handleInputChange}
             />
           </div>
-
+  
           <div className="form-row">
             <div className="form-field">
               <label>Task Type</label>
@@ -195,7 +223,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
                 ))}
               </select>
             </div>
-
+  
             <div className="form-field">
               <label>Task Description</label>
               <input
@@ -207,7 +235,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
               />
             </div>
           </div>
-
+  
           <div className="form-row">
             <div className="form-field">
               <label>Task Participants</label>
@@ -222,7 +250,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
                 ))}
               </select>
             </div>
-
+  
             <div className="form-field">
               <label>Task Status</label>
               <select
@@ -237,7 +265,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
               </select>
             </div>
           </div>
-
+  
           <div className="form-row">
             <div className="form-field">
               <label>Task Deadline</label>
@@ -260,7 +288,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
                 )}
               </div>
             </div>
-
+  
             <div className="form-field">
               <label>Task Reward</label>
               <div className="input-with-icon">
@@ -275,7 +303,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
               </div>
             </div>
           </div>
-
+  
           <div className="form-field upload-field">
             <label>Upload Task Image</label>
             <div className="upload-area">
@@ -300,19 +328,19 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
               )}
             </div>
           </div>
-
+  
           <button type="submit" className="submit-button">
             Submit
           </button>
         </form>
-
+  
         {showSuccessOverlay && (
           <div className="success-overlay">
             <div className="success-content">
               <center><img src={`${process.env.PUBLIC_URL}/success.png`} alt="Success" className="success-icon" /></center>
               <h2>Successful</h2>
               <p>Your task is successfully created.</p>
-              <button className="success-proceed-button" onClick={handleSuccessProceed}>Proceed</button>
+              <button className="success-proceed-button" onClick={onClose}>Proceed</button>
               <button className="create-new-task-link" onClick={() => setShowSuccessOverlay(false)} style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}>Back</button>
             </div>
           </div>

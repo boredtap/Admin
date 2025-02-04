@@ -12,6 +12,7 @@ const Dashboard = () => {
   const userLevelChartRef = useRef(null);
   const walletConnectionChartRef = useRef(null);
   const navigate = useNavigate();
+  const ws = useRef(null);
 
   const [dashboardData, setDashboardData] = useState({
     totalUsers: 0,
@@ -61,7 +62,7 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Error refreshing token:', error);
-      navigate('/signin');
+      navigate('/');
     }
   }, [navigate]);
 
@@ -116,6 +117,24 @@ const Dashboard = () => {
       fetchData('https://bored-tap-api.onrender.com/admin/dashboard/users/recent_activity', 'recentUserActivity');
       fetchData('https://bored-tap-api.onrender.com/admin/dashboard/levels/chart_data', 'userLevels');
     }
+
+    // Set up WebSocket connection
+    ws.current = new WebSocket('wss://bored-tap-api.onrender.com/ws');
+    ws.current.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      console.log('WebSocket message received:', message);
+      setDashboardData(prev => ({ ...prev, ...message }));
+    };
+
+    ws.current.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
   }, [fetchData, navigate, refreshToken]);
 
   useEffect(() => {
