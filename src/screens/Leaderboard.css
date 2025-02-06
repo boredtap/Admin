@@ -163,6 +163,20 @@
     white-space: nowrap;
   }
   
+  /* coin Cell Styles */
+.coin-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coin-icon {
+  width: 20px;
+  height: 20px;
+}
+
+
+
   .table-heading {
     text-align: left;
     font-size: 14px;
