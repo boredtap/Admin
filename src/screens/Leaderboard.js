@@ -1,11 +1,13 @@
+// Leaderboard.js
 import React, { useState, useEffect } from 'react';
-import NavigationPanel from '../components/NavigationPanel';
-import AppBar from '../components/AppBar';
+import NavigationPanel from '../components/NavigationPanel'; // Corrected path
+import AppBar from '../components/AppBar'; // Corrected path
 import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
 import './Leaderboard.css';
 
 const Leaderboard = () => {
+  // ... (rest of your code)
   const [selectedRows, setSelectedRows] = useState([]);
   const [activeTab, setActiveTab] = useState("All Time");
   const [showActionDropdown, setShowActionDropdown] = useState(null);
@@ -38,13 +40,39 @@ const Leaderboard = () => {
   });
 
   useEffect(() => {
-    // Fetch data from backend
-    fetch('/api/leaderboard-data')
-      .then(response => response.json())
-      .then(data => setLeaderboardData(data))
-      .catch(error => console.error('Error fetching leaderboard data:', error));
-  }, []);
+    fetchLeaderboardData(activeTab);
+  }, [activeTab]);
 
+  const fetchLeaderboardData = async (category) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        console.error("No access token found");
+        return;
+      }
+
+      const url = `https://bored-tap-api.onrender.com/admin/leaderboard/?category=${category.toLowerCase().replace(" ", "_")}`;
+      
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) throw new Error(`Failed to fetch leaderboard: ${response.status}`);
+
+      const data = await response.json();
+      setLeaderboardData(prev => ({
+        ...prev,
+        [category]: data
+      }));
+    } catch (err) {
+      console.error("Error fetching leaderboard:", err);
+    }
+  };
+  
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
     return date.toLocaleDateString('en-GB', {
@@ -90,9 +118,9 @@ const Leaderboard = () => {
     return (
       <div className="custom-date-picker">
         <div className="date-picker-header">
-          <button onClick={() => changeMonth(-1)}>&lt;</button>
+          <button onClick={() => changeMonth(-1)}></button>
           <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
-          <button onClick={() => changeMonth(1)}>&gt;</button>
+          <button onClick={() => changeMonth(1)}></button>
         </div>
         <div className="weekdays">
           {weekDays.map(day => (
@@ -190,9 +218,10 @@ const Leaderboard = () => {
       'Rank': user.rank,
       'Username': user.username,
       'Level': user.level,
-      'Coin Earned': user.coinEarned,
+      'Level Name': user.level_name,
+      'Coins Earned': user.coins_earned,
       'Clan': user.clan,
-      'Highest Streak': user.highestStreak,
+      'Longest Streak': user.longest_streak,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -201,10 +230,10 @@ const Leaderboard = () => {
     XLSX.writeFile(workbook, 'leaderboard.xlsx');
   };
 
-  const filteredData = leaderboardData[activeTab].filter(user => {
-    const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && user.level === level);
+  const filteredData = leaderboardData[activeTab]?.filter(user => {
+    const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && user.level_name === level);
     return (!Object.values(filters.level).includes(true) || levelMatch);
-  });
+  }) || [];
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
@@ -311,7 +340,7 @@ const Leaderboard = () => {
             <div className="table-heading">Level</div>
             <div className="table-heading">Coin Earned</div>
             <div className="table-heading">Clan</div>
-            <div className="table-heading">Highest Streak</div>
+            <div className="table-heading">Longest Streak</div>
             <div className="table-heading action-heading"> 
               <span>Action</span>
             </div>
@@ -327,10 +356,11 @@ const Leaderboard = () => {
               </div>
               <div className="table-cell">{user.rank}</div>
               <div className="table-cell">{user.username}</div>
-              <div className="table-cell">{user.level}</div>
-              <div className="table-cell">{user.coinEarned}</div>
+              <div className="table-cell">{user.level_name}</div>
+              <div className="table-cell coin-cell"> <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="coin" className="coin-icon" />
+                {user.coins_earned}</div>
               <div className="table-cell">{user.clan}</div>
-              <div className="table-cell">{user.highestStreak}</div>
+              <div className="table-cell">{user.longest_streak}</div>
               <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
                 <span>Action</span>
                 <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
