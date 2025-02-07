@@ -4,10 +4,12 @@ import NavigationPanel from '../components/NavigationPanel'; // Corrected path
 import AppBar from '../components/AppBar'; // Corrected path
 import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
+import UserProfileOverlay from '../components/UserProfileOverlay';
 import './Leaderboard.css';
 
 const Leaderboard = () => {
-  // ... (rest of your code)
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [selectedRows, setSelectedRows] = useState([]);
   const [activeTab, setActiveTab] = useState("All Time");
   const [showActionDropdown, setShowActionDropdown] = useState(null);
@@ -72,6 +74,7 @@ const Leaderboard = () => {
       console.error("Error fetching leaderboard:", err);
     }
   };
+  
   
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
@@ -181,11 +184,13 @@ const Leaderboard = () => {
     event.stopPropagation();
     setSelectedRows(prev => {
       if (prev.includes(index)) {
-        return prev.filter(row => row !== index);
+        return [];
       } else {
-        return [...prev, index];
+        return [index];
       }
     });
+    setSelectedUser(filteredData[index]);
+    setShowOverlay(true);
   };
 
   const handleActionClick = (index, event) => {
@@ -224,6 +229,7 @@ const Leaderboard = () => {
       'Longest Streak': user.longest_streak,
     }));
 
+
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Leaderboard');
@@ -238,6 +244,37 @@ const Leaderboard = () => {
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+  
+  const TableRow = ({ user, index }) => (
+    <div key={index} className={`leaderboard-table-row ${selectedRows.includes(index) ? "selected" : ""}`} onClick={(e) => handleRowClick(index, e)}>
+      <div className="table-cell radio-column">
+        <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
+      </div>
+      <div className="table-cell">{user.rank}</div>
+      <div className="table-cell">{user.username}</div>
+      <div className="table-cell">{user.level_name}</div>
+      <div className="table-cell coin-cell"> <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="coin" className="coin-icon" />
+        {user.coins_earned}</div>
+      <div className="table-cell">{user.clan}</div>
+      <div className="table-cell">{user.longest_streak}</div>
+      <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
+        <span>Action</span>
+        <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
+        {showActionDropdown === index && (
+          <div className="action-dropdown">
+            <div className="dropdown-item">
+              <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
+              <span>Edit</span>
+            </div>
+            <div className="dropdown-item" onClick={handleDelete}>
+              <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
+              <span>Delete</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="leaderboard-page">
@@ -271,7 +308,6 @@ const Leaderboard = () => {
 
           <div className="leaderboard-divider"></div>
 
-          {/* Search Bar and Buttons */}
           <div className="leaderboard-toolbar">
             <div className="search-bar">
               <img src={`${process.env.PUBLIC_URL}/search.png`} alt="Search" className="search-icon" />
@@ -318,7 +354,12 @@ const Leaderboard = () => {
                 </button>
                 {showDatePicker && (
                   <div className="date-picker-container">
-                    <CustomDatePicker />
+                    <CustomDatePicker 
+                      selectedDate={selectedDate}
+                      handleDateSelect={handleDateSelect}
+                      currentMonth={currentMonth}
+                      changeMonth={changeMonth}
+                    />
                   </div>
                 )}
               </div>
@@ -348,41 +389,16 @@ const Leaderboard = () => {
 
           <div className="leaderboard-divider"></div>
 
-          {/* Table Rows */}
           {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((user, index) => (
-            <div key={index} className={`leaderboard-table-row ${selectedRows.includes(index) ? "selected" : ""}`} onClick={(e) => handleRowClick(index, e)}>
-              <div className="table-cell radio-column">
-                <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
-              </div>
-              <div className="table-cell">{user.rank}</div>
-              <div className="table-cell">{user.username}</div>
-              <div className="table-cell">{user.level_name}</div>
-              <div className="table-cell coin-cell"> <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="coin" className="coin-icon" />
-                {user.coins_earned}</div>
-              <div className="table-cell">{user.clan}</div>
-              <div className="table-cell">{user.longest_streak}</div>
-              <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
-                <span>Action</span>
-                <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
-                {showActionDropdown === index && (
-                  <div className="action-dropdown">
-                    <div className="dropdown-item">
-                      <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
-                      <span>Edit</span>
-                    </div>
-                    <div className="dropdown-item" onClick={handleDelete}>
-                      <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
-                      <span>Delete</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <TableRow key={index} user={user} index={index} />
           ))}
 
           <div className="leaderboard-divider"></div>
 
-          {/* Footer with Pagination */}
+          {showOverlay && (
+            <UserProfileOverlay user={selectedUser} onClose={() => setShowOverlay(false)} />
+          )}
+
           <div className="table-footer">
             <div className="rows-per-page">
               <span>Show Result:</span>

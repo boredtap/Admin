@@ -1,96 +1,236 @@
+/* Backdrop for the overlay */
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Overlay container */
 .user-profile-overlay {
-    width: 752px;
-    height: 880px;
-    background-color: #202022;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    display: flex;
+  width: 752px;
+  max-width: 100%;
+  max-height: 90vh;
+  background-color: #202022;
+  position: relative;
+  padding: 20px;
+  box-sizing: border-box;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 8px;
+  overflow-y: auto;
+}
+
+/* Overlay Header */
+.overlay-header {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.overlay-header h1 {
+  color: orange;
+  margin: 0;
+  text-align: center;
+  width: 100%;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.cancel-icon {
+  position: absolute;
+  right: 0;
+  top: 0;
+  cursor: pointer;
+  font-size: 24px;
+}
+
+/* Profile Section */
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.profile-image img {
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.user-info {
+  text-align: center;
+}
+
+.username {
+  margin: 0;
+}
+
+.level {
+  margin: 0;
+  color: orange;
+}
+
+/* Achievement Section */
+.achievement-section {
+  width: 100%;
+  margin-bottom: 30px;
+}
+
+.achievement-section h3 {
+  margin: 0;
+  text-align: left;
+  width: 100%;
+  color: orange;
+}
+
+.achievement-section hr {
+  border: 0;
+  height: 1px;
+  background-color: #444;
+  margin: 10px 0;
+}
+
+.section-divider {
+  border: none;
+  height: 1px;
+  background-color: #444;
+  width: 100%;
+  margin: 10px 0;
+}
+
+.achievement-row {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.achievement-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  margin: 5px;
+}
+
+/* Wallet Section */
+.wallet-section {
+  width: 100%;
+  margin-bottom: 20px;
+  color: orange;
+}
+
+.wallet-section h3 {
+  margin: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.wallet-section hr {
+  border: 0;
+  height: 1px;
+  background-color: #444;
+  margin: 10px 0;
+}
+
+.wallet-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.wallet-value {
+  font-size: 16px;
+}
+
+/* Clan Section */
+.clan-section {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.clan-section h3 {
+  margin: 0;
+  text-align: left;
+  width: 100%;
+  color: orange;
+}
+
+.clan-section hr {
+  border: 0;
+  height: 1px;
+  background-color: #444;
+  margin: 10px 0;
+}
+
+.clan-row {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.clan-item {
+  margin-bottom: 5px;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.action-buttons button {
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.suspend2-btn {
+  background-color: #FF0000;
+  color: #ffffff;
+}
+
+.reward-btn {
+  background-color: #0CAF60;
+  color: white;
+}
+
+.btn-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .user-profile-overlay {
+    width: 90%;
+    padding: 15px;
+  }
+  .achievement-row,
+  .clan-row,
+  .wallet-row {
     flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    box-sizing: border-box;
-    z-index: 1000;
+    align-items: flex-start;
   }
-  
-  .overlay-header {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .overlay-header h1 {
-    color: orange;
-    margin: 0;
-  }
-  
-  .cancel-icon {
-    cursor: pointer;
-    font-size: 24px;
-  }
-  
-  .profile-image img {
-    border-radius: 50%;
-  }
-  
-  .user-info {
-    text-align: center;
-  }
-  
-  .username {
-    color: white;
-  }
-  
-  .level {
-    color: orange;
-  }
-  
-  .achievements, .today-achievements, .wallet, .clan {
-    width: 100%;
-    margin-bottom: 20px;
-  }
-  
-  hr {
-    border: 0;
-    height: 1px;
-    background-color: #444;
-    margin: 10px 0;
-  }
-  
-  .achievement-row, .clan-info {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .disconnect-btn {
-    background-color: #ff4136;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-  }
-  
   .action-buttons {
-    display: flex;
-    gap: 10px;
+    flex-direction: column;
+    width: 100%;
   }
-  
-  .suspend-btn {
-    background-color: #ff4136;
-    color: white;
-  }
-  
-  .reward-btn {
-    background-color: #2ecc40;
-    color: white;
-  }
-  
-  button {
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-  }
+}
