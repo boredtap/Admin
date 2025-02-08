@@ -25,7 +25,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
 
   const taskTypes = ['in-game', 'special', 'social'];
   const participantLevels = [
-    'all-users', 'novice', 'explorer', 'apprentice',
+    'all_users', 'novice', 'explorer', 'apprentice',
     'warrior', 'master', 'champion',
     'tactician', 'specialist', 'conqueror',
     'legend',
