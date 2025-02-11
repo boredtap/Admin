@@ -65,7 +65,7 @@ const Tasks = () => {
     
     try {
       const response = await fetch(
-        `https://bored-tap-api.onrender.com/admin/task/all_tasks?${params.toString()}`,
+        `https://bt-coins.onrender.com/admin/task/all_tasks?${params.toString()}`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -103,7 +103,7 @@ const Tasks = () => {
     setShowActionDropdown(null);
     try {
       const response = await fetch(
-        `https://bored-tap-api.onrender.com/admin/task/tasks_by_id?task_id=${task.id}`,
+        `https://bt-coins.onrender.com/admin/task/tasks_by_id?task_id=${task.id}`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -127,8 +127,8 @@ const Tasks = () => {
   const handleSubmitTask = async (taskData) => {
     try {
       const endpoint = taskData.id 
-        ? 'https://bored-tap-api.onrender.com/admin/task/update_task' 
-        : 'https://bored-tap-api.onrender.com/admin/task/create_task';
+        ? 'https://bt-coins.onrender.com/admin/task/update_task' 
+        : 'https://bt-coins.onrender.com/admin/task/create_task';
       
       const formData = new FormData();
       Object.entries(taskData).forEach(([key, value]) => {
@@ -331,7 +331,7 @@ const Tasks = () => {
     try {
       const taskIdsToDelete = selectedRows;
       await Promise.all(taskIdsToDelete.map(taskId => 
-        fetch(`https://bored-tap-api.onrender.com/admin/task/delete_task?task_id=${taskId}`, {
+        fetch(`https://bt-coins.onrender.com/admin/task/delete_task?task_id=${taskId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,

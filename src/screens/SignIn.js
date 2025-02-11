@@ -11,7 +11,7 @@ const SignIn = ({ onSignInSuccess }) => {
   const handleSignIn = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('https://bored-tap-api.onrender.com/signin', {
+      const response = await fetch('https://bt-coins.onrender.com/signin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',

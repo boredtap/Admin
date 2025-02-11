@@ -40,7 +40,7 @@ const Dashboard = () => {
   const refreshToken = useCallback(async () => {
     try {
       const refreshToken = localStorage.getItem('refresh_token');
-      const response = await fetch('https://bored-tap-api.onrender.com/refresh', {
+      const response = await fetch('https://bt-coins.onrender.com/refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -97,25 +97,25 @@ const Dashboard = () => {
     if (!token || isTokenExpired(token)) {
       refreshToken().then(newToken => {
         if (newToken) {
-          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
-          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_new_users', 'newUsers');
-          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coins_earned', 'totalCoinEarned');
-          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/new_users', 'newUsersList');
-          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/leaderboard', 'leaderboardList');
-          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/coins/recent_activity', 'recentCoinActivity');
-          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/users/recent_activity', 'recentUserActivity');
-          fetchData('https://bored-tap-api.onrender.com/admin/dashboard/levels/chart_data', 'userLevels');
+          fetchData('https://bt-coins.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
+          fetchData('https://bt-coins.onrender.com/admin/dashboard/total_new_users', 'newUsers');
+          fetchData('https://bt-coins.onrender.com/admin/dashboard/overall_total_coins_earned', 'totalCoinEarned');
+          fetchData('https://bt-coins.onrender.com/admin/dashboard/new_users', 'newUsersList');
+          fetchData('https://bt-coins.onrender.com/admin/dashboard/leaderboard', 'leaderboardList');
+          fetchData('https://bt-coins.onrender.com/admin/dashboard/coins/recent_activity', 'recentCoinActivity');
+          fetchData('https://bt-coins.onrender.com/admin/dashboard/users/recent_activity', 'recentUserActivity');
+          fetchData('https://bt-coins.onrender.com/admin/dashboard/levels/chart_data', 'userLevels');
         }
       });
     } else {
-      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
-      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/total_new_users', 'newUsers');
-      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/overall_total_coins_earned', 'totalCoinEarned');
-      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/new_users', 'newUsersList');
-      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/leaderboard', 'leaderboardList');
-      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/coins/recent_activity', 'recentCoinActivity');
-      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/users/recent_activity', 'recentUserActivity');
-      fetchData('https://bored-tap-api.onrender.com/admin/dashboard/levels/chart_data', 'userLevels');
+      fetchData('https://bt-coins.onrender.com/admin/dashboard/overall_total_users', 'totalUsers');
+      fetchData('https://bt-coins.onrender.com/admin/dashboard/total_new_users', 'newUsers');
+      fetchData('https://bt-coins.onrender.com/admin/dashboard/overall_total_coins_earned', 'totalCoinEarned');
+      fetchData('https://bt-coins.onrender.com/admin/dashboard/new_users', 'newUsersList');
+      fetchData('https://bt-coins.onrender.com/admin/dashboard/leaderboard', 'leaderboardList');
+      fetchData('https://bt-coins.onrender.com/admin/dashboard/coins/recent_activity', 'recentCoinActivity');
+      fetchData('https://bt-coins.onrender.com/admin/dashboard/users/recent_activity', 'recentUserActivity');
+      fetchData('https://bt-coins.onrender.com/admin/dashboard/levels/chart_data', 'userLevels');
     }
 
     // Set up WebSocket connection
