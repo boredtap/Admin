@@ -12,7 +12,7 @@ const UserProfileOverlay = ({ onClose, user }) => {
         console.error("No access token found");
         return;
       }
-      fetch(`https://bored-tap-api.onrender.com/admin/leaderboard/leaderboard_profile?telegram_user_id=${user.telegram_user_id}`, {
+      fetch(`https://bt-coins.onrender.com/admin/leaderboard/leaderboard_profile?telegram_user_id=${user.telegram_user_id}`, {
         method: "GET",
         headers: {
           'Authorization': `Bearer ${token}`,

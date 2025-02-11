@@ -76,7 +76,7 @@ const CreateTaskOverlay = ({ onClose, taskToEdit, onSubmit }) => {
         formDataBody.append('task_image', formData.image);
       }
   
-      const urlWithQuery = `https://bored-tap-api.onrender.com/admin/task/create_task?${queryParams.toString()}`;
+      const urlWithQuery = `https://bt-coins.onrender.com/admin/task/create_task?${queryParams.toString()}`;
       console.log('URL:', urlWithQuery);
   
       const response = await fetch(urlWithQuery, {

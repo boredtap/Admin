@@ -53,7 +53,7 @@ const Leaderboard = () => {
         return;
       }
 
-      const url = `https://bored-tap-api.onrender.com/admin/leaderboard/?category=${category.toLowerCase().replace(" ", "_")}`;
+      const url = `https://bt-coins.onrender.com/admin/leaderboard/?category=${category.toLowerCase().replace(" ", "_")}`;
       
       const response = await fetch(url, {
         method: "GET",
