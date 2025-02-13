@@ -23,6 +23,7 @@
     width: 100px;
     height: 100px;
     margin-bottom: 20px;
+    position: center;
   }
   
   .success-content h2 {

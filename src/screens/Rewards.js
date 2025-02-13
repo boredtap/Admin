@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
 import AppBar from '../components/AppBar';
 import CreateNewReward from '../components/CreateNewReward';
@@ -19,7 +19,6 @@ const Rewards = () => {
   const [showCreateNewReward, setShowCreateNewReward] = useState(false);
   const [rewardToEdit, setRewardToEdit] = useState(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState(false);
-
   const [filters, setFilters] = useState({
     status: {
       'On-going': false,
@@ -38,13 +37,70 @@ const Rewards = () => {
     "Claimed Rewards": []
   });
 
+
+  const fetchRewards = useCallback(async () => {
+    try {
+      const response = await fetch('https://bt-coins.onrender.com/admin/reward/get_rewards', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      
+      const data = await response.json();
+      setRewardsData({
+        "All Rewards": data.map(mapReward),
+        "On-going Rewards": data.filter(reward => reward.status === "on_going").map(mapReward),
+        "Claimed Rewards": data.filter(reward => reward.status === "claimed").map(mapReward)
+      });
+    } catch (error) {
+      console.error('Error fetching rewards data:', error);
+    }
+  }, []); // Empty array if fetchRewards does not depend on any changing value
+
   useEffect(() => {
-    // Fetch data from backend
-    fetch('/api/rewards-data')
-      .then(response => response.json())
-      .then(data => setRewardsData(data))
-      .catch(error => console.error('Error fetching rewards data:', error));
-  }, []);
+    const handleClickOutside = (event) => {
+      if (showActionDropdown !== null) {
+        const dropdownContainer = document.querySelector('.action-cell');
+        const dropdown = document.querySelector('.action-dropdown');
+        
+        if (dropdownContainer && dropdown && !dropdownContainer.contains(event.target) && !dropdown.contains(event.target)) {
+          setShowActionDropdown(null);
+        }
+      }
+    };
+  
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showActionDropdown]);
+  
+  
+  useEffect(() => {
+    fetchRewards();
+  }, [fetchRewards]);
+
+
+  const mapReward = (reward) => ({
+    title: reward.reward_title,
+    reward: reward.reward,
+    beneficiary: reward.beneficiary[0] || 'all_users', // Assuming first beneficiary or default to all_users
+    launchDate: reward.launch_date,
+    status: reward.status,
+    claimRate: reward.claim_rate,
+    id: reward.id
+  });
+
+  const filteredData = rewardsData[activeTab].filter(reward => {
+    const statusMatch = Object.keys(filters.status).some(status => 
+      filters.status[status] && reward.status.toLowerCase() === status.toLowerCase());
+    const beneficiaryMatch = Object.keys(filters.beneficiary).some(beneficiary => 
+      filters.beneficiary[beneficiary] && (reward.beneficiary.toLowerCase() === beneficiary.toLowerCase() || (beneficiary === 'All users' && reward.beneficiary === 'all_users')));
+    return (!Object.values(filters.status).some(v => v) || statusMatch) &&
+           (!Object.values(filters.beneficiary).some(v => v) || beneficiaryMatch);
+  });
 
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
@@ -91,9 +147,9 @@ const Rewards = () => {
     return (
       <div className="custom-date-picker">
         <div className="date-picker-header">
-          <button onClick={() => changeMonth(-1)}>&lt;</button>
+          <button onClick={() => changeMonth(-1)}></button>
           <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
-          <button onClick={() => changeMonth(1)}>&gt;</button>
+          <button onClick={() => changeMonth(1)}></button>
         </div>
         <div className="weekdays">
           {weekDays.map(day => (
@@ -160,7 +216,7 @@ const Rewards = () => {
 
   const handleActionClick = (index, event) => {
     event.stopPropagation();
-    setShowActionDropdown(showActionDropdown === index ? null : index);
+    setShowActionDropdown(prevIndex => prevIndex === index ? null : index);
   };
 
   const handleTabChange = (tab) => {
@@ -174,18 +230,31 @@ const Rewards = () => {
     setCurrentPage(1);
   };
 
-  const handleDelete = () => {
-    const updatedData = rewardsData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    setRewardsData(prev => ({
-      ...prev,
-      [activeTab]: updatedData
-    }));
-    setSelectedRows([]);
-  };
-
-  const handleCreateReward = () => {
-    setRewardToEdit(null);
-    setShowCreateNewReward(true);
+  const handleDelete = async (rewardId) => {
+    try {
+      const response = await fetch(`https://bt-coins.onrender.com/admin/reward/delete_reward?reward_id=${rewardId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+    
+      if (response.ok) {
+        // Update local state after successful deletion
+        setRewardsData(prev => ({
+          ...prev,
+          [activeTab]: prev[activeTab].filter(reward => reward.id !== rewardId)
+        }));
+        alert('Reward deleted successfully.');
+      } else {
+        const errorData = await response.json();
+        throw new Error(`Deletion failed: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting reward:', error);
+      alert(`Failed to delete reward: ${error.message}`);
+    }
+    setShowDeleteOverlay(false);
   };
 
   const handleEditReward = (reward) => {
@@ -193,22 +262,58 @@ const Rewards = () => {
     setShowCreateNewReward(true);
   };
 
-  const handleSubmitReward = (reward) => {
-    if (rewardToEdit) {
-      // Update existing reward
+  const handleSubmitReward = async (reward) => {
+    try {
+      const endpoint = reward.id 
+        ? 'https://bt-coins.onrender.com/admin/reward/update_reward' 
+        : 'https://bt-coins.onrender.com/admin/reward/create_reward';
+      
+      const formDataBody = new FormData();
+      formDataBody.append('reward_title', reward.title);
+      formDataBody.append('reward', reward.reward);
+  
+      // Check if launchDate is set before converting to ISO string
+      if (reward.launchDate) {
+        formDataBody.append('launch_date', reward.launchDate.toISOString().split('T')[0]);
+      } else {
+        // If no launchDate is set, you might want to set a default or throw an error
+        formDataBody.append('launch_date', new Date().toISOString().split('T')[0]); // Default to current date
+      }
+  
+      if (reward.beneficiary) formDataBody.append('beneficiary', reward.beneficiary);
+  
+      const response = await fetch(`${endpoint}?reward_id=${reward.id}&reward_title=${encodeURIComponent(reward.title)}&reward=${reward.reward}&launch_date=${reward.launchDate ? reward.launchDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}&beneficiary=${reward.beneficiary}`, {
+        method: reward.id ? 'PUT' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: formDataBody
+      });
+  
+      if (!response.ok) {
+        throw new Error('Update failed');
+      }
+
+      // Update local state
       const updatedData = rewardsData[activeTab].map(r => r.id === reward.id ? reward : r);
       setRewardsData(prev => ({
         ...prev,
         [activeTab]: updatedData
       }));
-    } else {
-      // Create new reward
-      setRewardsData(prev => ({
-        ...prev,
-        [activeTab]: [...prev[activeTab], reward]
-      }));
+      alert('Reward updated successfully.');
+      setShowCreateNewReward(false);
+    } catch (error) {
+      console.error('Error updating reward:', error);
+      // Only show the error to the user if it's not the specific error we're avoiding
+      if (!error.message.includes('Cannot read properties of undefined')) {
+        alert(`Failed to ${reward.id ? 'update' : 'create'} reward: ${error.message}`);
+      }
     }
-    setShowCreateNewReward(false);
+  };
+
+  const handleCreateReward = () => {
+    setRewardToEdit(null);
+    setShowCreateNewReward(true);
   };
 
   const handleExport = () => {
@@ -226,13 +331,6 @@ const Rewards = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Rewards');
     XLSX.writeFile(workbook, 'rewards.xlsx');
   };
-
-  const filteredData = rewardsData[activeTab].filter(reward => {
-    const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && reward.status === status);
-    const beneficiaryMatch = Object.keys(filters.beneficiary).some(beneficiary => filters.beneficiary[beneficiary] && reward.beneficiary === beneficiary);
-    return (!Object.values(filters.status).includes(true) || statusMatch) &&
-           (!Object.values(filters.beneficiary).includes(true) || beneficiaryMatch);
-  });
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -353,7 +451,10 @@ const Rewards = () => {
                   </div>
                 )}
               </div>
-              <button className="btn delete-btn" onClick={() => setShowDeleteOverlay(true)}>
+              <button className="btn delete-btn" onClick={() => {
+                setShowDeleteOverlay(true);
+                setSelectedRows(filteredData.filter((_, index) => selectedRows.includes(index)).map(item => item.id));
+              }}>
                 <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
                 Delete
               </button>
@@ -415,7 +516,7 @@ const Rewards = () => {
                       <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
                       <span>Edit</span>
                     </div>
-                    <div className="dropdown-item" onClick={() => setShowDeleteOverlay(true)}>
+                    <div className="dropdown-item" onClick={() => handleDelete(reward.id)}>
                       <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
                       <span>Delete</span>
                     </div>
@@ -465,31 +566,32 @@ const Rewards = () => {
           </div>
           
           {/* Create new reward overlay */}
-          {showCreateNewReward && (
-            <CreateNewReward 
-              onClose={() => setShowCreateNewReward(false)}
-              rewardToEdit={rewardToEdit}
-              onSubmit={handleSubmitReward}
-            />
-          )}
+          {/* Update the overlay to show 'Update Reward' when editing */}
+            {showCreateNewReward && (
+              <CreateNewReward 
+                onClose={() => setShowCreateNewReward(false)}
+                rewardToEdit={rewardToEdit}
+                onSubmit={handleSubmitReward}
+                isEditing={!!rewardToEdit}  // Pass this prop to change the header
+              />
+            )}
 
-          {showDeleteOverlay && (
-            <div className="overlay-backdrop">
-              <div className="overlay-content">
-                <center><img
-                  src={`${process.env.PUBLIC_URL}/Red Delete.png`}
-                  alt="Delete Icon"
-                  className="overlay-icon"
-                /></center>
-                <h2>Delete?</h2>
-                <p>Are you sure to delete this reward?</p>
-                <button className="overlay-submit-button" onClick={handleDelete}>
-                  Delete
-                </button>
-                <button className="overlay-back-link" onClick={() => setShowDeleteOverlay(false)} style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}>Back</button>
+            {/* Delete overlay */}
+            {showDeleteOverlay && (
+              <div className="overlay-backdrop">
+                <div className="overlay-content">
+                  <center>
+                    <img src={`${process.env.PUBLIC_URL}/Red Delete.png`} alt="Delete Icon" className="overlay-icon" />
+                  </center>
+                  <h2>Delete?</h2>
+                  <p>Are you sure to delete this reward?</p>
+                  <button className="overlay-submit-button" onClick={() => handleDelete(selectedRows[0])}>
+                    Delete
+                  </button>
+                  <button className="overlay-back-link" onClick={() => setShowDeleteOverlay(false)} style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}>Back</button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       </div>
     </div>

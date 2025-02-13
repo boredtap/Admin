@@ -259,7 +259,7 @@
     font-weight: 500;
   }
   
-  .status-btn.on-going {
+  .status-btn.on_going {
     background-color: #E7F7EF;
     color: #0CAF60;
   }

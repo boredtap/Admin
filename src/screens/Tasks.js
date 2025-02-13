@@ -45,27 +45,13 @@ const Tasks = () => {
     "Social": []
   });
 
-  // Combine fetchTasksData and fetchFilteredTasks into one function
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     setError(null);
     
-    const params = new URLSearchParams();
-    
-    // Add filter conditions
-    Object.entries(filters.status).forEach(([status, isChecked]) => {
-      if (isChecked) params.append('status', status);
-    });
-    
-    Object.entries(filters.type).forEach(([type, isChecked]) => {
-      if (isChecked) params.append('type', type.toLowerCase());
-    });
-  
-    if (searchTerm) params.append('search', searchTerm);
-    
     try {
       const response = await fetch(
-        `https://bt-coins.onrender.com/admin/task/all_tasks?${params.toString()}`,
+        'https://bt-coins.onrender.com/admin/task/all_tasks', 
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -91,13 +77,12 @@ const Tasks = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, searchTerm]); // Add dependencies here
-  
+  }, []);
 
-  // Use effect to fetch data when filters or search term change
+  // Use effect to fetch data when component mounts
   useEffect(() => {
     fetchTasks();
-  }, [filters, searchTerm, fetchTasks]);
+  }, [fetchTasks]);
 
   const handleEditTask = async (task) => {
     setShowActionDropdown(null);
@@ -277,10 +262,8 @@ const Tasks = () => {
     event.stopPropagation();
     setShowActionDropdown(prevIndex => {
       if (prevIndex === index) {
-        // If clicking the same dropdown, close it
         return null;
       } else {
-        // If clicking a different dropdown, close the previous one and open the new one
         return index;
       }
     });
@@ -315,7 +298,6 @@ const Tasks = () => {
     };
   }, [showActionDropdown]);
 
-
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setSelectedRows([]);
@@ -338,16 +320,13 @@ const Tasks = () => {
           },
         })
       ));
-      // Changed fetchTasksData to fetchTasks
-      fetchTasks();
+      await fetchTasks();
       setSelectedRows([]);
       setShowDeleteOverlay(false);
     } catch (error) {
       console.error('Error deleting tasks:', error);
     }
   };
-
-
 
   const handleCreateTask = () => {
     setTaskToEdit(null);
@@ -371,9 +350,15 @@ const Tasks = () => {
   };
 
   const filteredData = tasksData[activeTab].filter(task => {
-    const statusMatch = !Object.values(filters.status).some(Boolean) || filters.status[task.task_status];
-    const typeMatch = !Object.values(filters.type).some(Boolean) || filters.type[task.task_type];
-    return statusMatch && typeMatch;
+    const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && task.task_status === status);
+    const typeMatch = Object.keys(filters.type).some(type => filters.type[type] && task.task_type === type.toLowerCase());
+    const searchMatch = task.task_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        task.task_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        task.task_status.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return (!Object.values(filters.status).some(v => v) || statusMatch) &&
+           (!Object.values(filters.type).some(v => v) || typeMatch) &&
+           (searchTerm === '' || searchMatch);
   });
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
@@ -386,7 +371,11 @@ const Tasks = () => {
         <AppBar screenName="Tasks" />
         <div className="tasks-body-frame">
           {/* Show loading state */}
-          {loading && <div className="loading">Loading tasks...</div>}
+          {loading && (
+            <div className="central-loading">
+              <p style={{color: 'orange', fontSize: '24px', textAlign: 'center'}}>Fetching Tasks...</p>
+            </div>
+          )}
           
           {/* Show error state */}
           {error && <div className="error">Error: {error}</div>}

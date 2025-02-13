@@ -165,6 +165,14 @@
   align-items: center;
 }
 
+.central-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full height of the viewport */
+  width: 100%;
+}
+
 .table-heading {
   text-align: left;
   font-size: 14px;
