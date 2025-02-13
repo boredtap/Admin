@@ -3,10 +3,10 @@ import './CreateNewReward.css';
 
 const clans = ["TON Station", "HiddenCode", "h2o", "Tapper Legends"];
 const levels = [
-  'All Users', 'Novice-Lv 1', 'Explorer-Lv 2', 'Apprentice-Lv 3',
-  'Warrior-Lv 4', 'Master - Lv 5', 'Champion - Lv 6',
-  'Tactician- Lv 7', 'Specialist - Lv 8', 'Conqueror -Lv 9',
-  'Legend - Lv 10'
+  'all_users', 'novice', 'explorer', 'apprentice',
+  'warrior', 'master', 'champion',
+  'tactician', 'specialist', 'conqueror',
+  'legend'
 ];
 
 const CreateRewardOverlay = ({ onClose, rewardToEdit, onSubmit, isEditing }) => {
