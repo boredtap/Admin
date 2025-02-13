@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './CreateNewReward.css';
 
 const clans = ["TON Station", "HiddenCode", "h2o", "Tapper Legends"];
@@ -9,11 +9,11 @@ const levels = [
   'Legend - Lv 10'
 ];
 
-const CreateRewardOverlay = ({ onClose }) => {
+const CreateRewardOverlay = ({ onClose, rewardToEdit, onSubmit, isEditing }) => {
   const [formData, setFormData] = useState({
     rewardTitle: '',
     rewardAmount: '',
-    launchDate: null,
+    launchDate: new Date(),
     beneficiaryType: '',
     selectedClans: [],
     selectedLevels: [],
@@ -23,9 +23,44 @@ const CreateRewardOverlay = ({ onClose }) => {
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const beneficiaryTypes = ['All Users', 'Clan(s)', 'Level(s)', 'Specific User(s)'];
-  const [beneficiaryFieldLabel, setBeneficiaryFieldLabel] = useState('');
-  const [showDropdown, setShowDropdown] = useState({ clans: false, levels: false });
+  const [showDropdown, setShowDropdown] = useState({ 
+    beneficiaries: false,
+    clans: false, 
+    levels: false 
+  });
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+  useEffect(() => {
+    if (rewardToEdit) {
+      setFormData({
+        rewardTitle: rewardToEdit.title,
+        rewardAmount: rewardToEdit.reward,
+        launchDate: new Date(rewardToEdit.launchDate),
+        beneficiaryType: getBeneficiaryTypeReverse(rewardToEdit.beneficiary),
+        selectedClans: rewardToEdit.beneficiary === 'clan' ? [rewardToEdit.beneficiaryDetail] : [],
+        selectedLevels: rewardToEdit.beneficiary === 'level' ? [rewardToEdit.beneficiaryDetail] : [],
+        specificUsers: rewardToEdit.beneficiary === 'specific_users' ? rewardToEdit.beneficiaryDetail.join(', ') : '',
+        image: null,
+      });
+    }
+  }, [rewardToEdit]);
+
+  const getBeneficiaryTypeReverse = (beneficiary) => {
+    switch (beneficiary) {
+      case 'all_users': return 'All Users';
+      case 'clan': return 'Clan(s)';
+      case 'level': return 'Level(s)';
+      case 'specific_users': return 'Specific User(s)';
+      default: return '';
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -43,27 +78,15 @@ const CreateRewardOverlay = ({ onClose }) => {
       selectedLevels: [],
       specificUsers: ''
     }));
-    // Set the label based on the beneficiary type
-    switch (type) {
-      case 'Clan(s)':
-        setBeneficiaryFieldLabel('Clan(s)');
-        break;
-      case 'Level(s)':
-        setBeneficiaryFieldLabel('Level(s)');
-        break;
-      case 'Specific User(s)':
-        setBeneficiaryFieldLabel('Specific User(s)');
-        break;
-      default:
-        setBeneficiaryFieldLabel('');
-    }
+    setShowDropdown(prev => ({ ...prev, beneficiaries: false }));
   };
 
   const toggleDropdown = (field) => {
-    setShowDropdown(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }));
+    setShowDropdown(prev => {
+      const newState = { beneficiaries: false, clans: false, levels: false };
+      newState[field] = !prev[field];
+      return newState;
+    });
   };
 
   const handleCheckboxChange = (field, item) => {
@@ -76,24 +99,24 @@ const CreateRewardOverlay = ({ onClose }) => {
   };
 
   const renderBeneficiaryField = () => {
-    if (!beneficiaryFieldLabel) return null;
+    if (!formData.beneficiaryType || formData.beneficiaryType === 'All Users') return null;
 
     let content;
-    switch (beneficiaryFieldLabel) {
+    switch (formData.beneficiaryType) {
       case 'Clan(s)':
         content = (
-          <div className="multi-select-field">
-            <select 
-              className="form-select" 
-              value="" 
-              onChange={() => toggleDropdown('clans')}
+          <div className="dropdown-container">
+            <div 
+              className="dropdown-toggle"
+              onClick={() => toggleDropdown('clans')}
             >
-              <option value="">Select Clans</option>
-            </select>
+              {formData.selectedClans.length > 0 ? formData.selectedClans.join(', ') : "Select Clans"}
+              <span className="dropdown-icon">▼</span>
+            </div>
             {showDropdown.clans && (
-              <div className="checkbox-group">
+              <div className="dropdown-menu">
                 {clans.map((clan, index) => (
-                  <label className="checkbox-label" key={index}>
+                  <label className="dropdown-item checkbox-label" key={index}>
                     <input 
                       type="checkbox" 
                       checked={formData.selectedClans.includes(clan)} 
@@ -109,18 +132,18 @@ const CreateRewardOverlay = ({ onClose }) => {
         break;
       case 'Level(s)':
         content = (
-          <div className="multi-select-field">
-            <select 
-              className="form-select" 
-              value="" 
-              onChange={() => toggleDropdown('levels')}
+          <div className="dropdown-container">
+            <div 
+              className="dropdown-toggle"
+              onClick={() => toggleDropdown('levels')}
             >
-              <option value="">Select Levels</option>
-            </select>
+              {formData.selectedLevels.length > 0 ? formData.selectedLevels.join(', ') : "Select Levels"}
+              <span className="dropdown-icon">▼</span>
+            </div>
             {showDropdown.levels && (
-              <div className="checkbox-group">
+              <div className="dropdown-menu">
                 {levels.map((level, index) => (
-                  <label className="checkbox-label" key={index}>
+                  <label className="dropdown-item checkbox-label" key={index}>
                     <input 
                       type="checkbox" 
                       checked={formData.selectedLevels.includes(level)} 
@@ -148,16 +171,15 @@ const CreateRewardOverlay = ({ onClose }) => {
         break;
       default:
         content = null;
-    } 
+    }
 
-    return (
+    return content && (
       <div className="form-field">
-        <label>{beneficiaryFieldLabel}</label>
+        <label>{formData.beneficiaryType}</label>
         {content}
       </div>
     );
   };
-
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -177,7 +199,6 @@ const CreateRewardOverlay = ({ onClose }) => {
     setShowDatePicker(false);
   };
 
-  // Date picker helper functions
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -213,25 +234,20 @@ const CreateRewardOverlay = ({ onClose }) => {
     return (
       <div className="custom-date-picker">
         <div className="date-picker-header">
-          <button onClick={() => changeMonth(-1)}>&lt;</button>
+          <button onClick={() => changeMonth(-1)}>{"<"}</button>
           <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
-          <button onClick={() => changeMonth(1)}>&gt;</button>
+          <button onClick={() => changeMonth(1)}>{">"}</button>
         </div>
         <div className="weekdays">
-          {weekDays.map(day => (
-            <div key={day} className="weekday">{day}</div>
+          {weekDays.map(weekDay => (
+            <div key={weekDay} className="weekday">{weekDay}</div>
           ))}
         </div>
         <div className="days-grid">
           {days.map((date, index) => (
             <div
               key={index}
-              className={`day ${date ? 'valid-day' : ''} ${
-                formData.launchDate && date &&
-                date.toDateString() === formData.launchDate.toDateString()
-                  ? 'selected'
-                  : ''
-              }`}
+              className={`day ${date ? 'valid-day' : ''} ${formData.launchDate && date && date.toDateString() === formData.launchDate.toDateString() ? 'selected' : ''}`}
               onClick={() => date && handleDateChange(date)}
             >
               {date ? date.getDate() : ''}
@@ -242,17 +258,129 @@ const CreateRewardOverlay = ({ onClose }) => {
     );
   };
 
+  const validateFormData = () => {
+    if (!formData.rewardTitle.trim()) {
+      alert('Please enter a reward title.');
+      return false;
+    }
+    if (!formData.rewardAmount || isNaN(formData.rewardAmount)) {
+      alert('Please enter a valid reward amount.');
+      return false;
+    }
+    if (!formData.launchDate) {
+      alert('Please select a launch date.');
+      return false;
+    }
+    if (!formData.beneficiaryType) {
+      alert('Please select a beneficiary type.');
+      return false;
+    }
+    if (formData.beneficiaryType === 'Clan(s)' && formData.selectedClans.length === 0) {
+      alert('Please select at least one clan.');
+      return false;
+    }
+    if (formData.beneficiaryType === 'Level(s)' && formData.selectedLevels.length === 0) {
+      alert('Please select at least one level.');
+      return false;
+    }
+    if (formData.beneficiaryType === 'Specific User(s)' && !formData.specificUsers.trim()) {
+      alert('Please enter at least one user.');
+      return false;
+    }
+    if (!formData.image) {
+      alert('Please upload an image for the reward.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateFormData()) return;
+
+    try {
+      const formDataBody = new FormData();
+      
+      // Add required query parameters
+      const queryParams = new URLSearchParams({
+        reward_title: formData.rewardTitle,
+        reward: formData.rewardAmount,
+        launch_date: formData.launchDate.toISOString().split('T')[0],
+        beneficiary: getBeneficiaryType(formData.beneficiaryType)
+      });
+  
+      // Add optional form data based on beneficiary type
+      if (formData.beneficiaryType === 'Clan(s)') {
+        formData.selectedClans.forEach(clan => formDataBody.append('clan', clan));
+      } else if (formData.beneficiaryType === 'Level(s)') {
+        formData.selectedLevels.forEach(level => formDataBody.append('level', level));
+      } else if (formData.beneficiaryType === 'Specific User(s)') {
+        formDataBody.append('specific_users', formData.specificUsers.split(',').map(user => user.trim()));
+      }
+      if (formData.image) {
+        formDataBody.append('reward_image', formData.image);
+      }
+  
+      console.log('Sending Data:', formData);
+
+      const endpoint = isEditing ? 'update_reward' : 'create_reward';
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const response = await fetch(
+        `https://bt-coins.onrender.com/admin/reward/${endpoint}?${queryParams.toString()}&reward_id=${rewardToEdit ? rewardToEdit.id : ''}`,
+        {
+          method: method,
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+          body: formDataBody,
+        }
+      );
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`);
+      }
+  
+      const result = await response.json();
+      console.log('Success:', result);
+      setShowSuccessOverlay(true);
+      onSubmit(result); // Call the onSubmit function passed as prop to update parent state
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to ' + (isEditing ? 'update' : 'create') + ' reward: ' + error.message);
+    }
+  };
+
+  const getBeneficiaryType = (type) => {
+    switch (type) {
+      case 'All Users': return 'all_users';
+      case 'Clan(s)': return 'clan';
+      case 'Level(s)': return 'level';
+      case 'Specific User(s)': return 'specific_users';
+      default: return '';
+    }
+  };
+
+  const handleCloseSuccessOverlay = () => {
+    setShowSuccessOverlay(false);
+    onClose();
+  };
+
+  const beneficiaryTypes = ['All Users', 'Clan(s)', 'Level(s)', 'Specific User(s)'];
+
   return (
     <div className="overlay-backdrop">
       <div className="create-task-overlay">
         <div className="overlay-header">
-          <h2>Create New Reward</h2>
+          <h2>{isEditing ? 'Update Reward' : 'Create New Reward'}</h2>
           <button className="close-button" onClick={onClose}>
             <img src={`${process.env.PUBLIC_URL}/cancel.png`} alt="Cancel" />
           </button>
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); console.log(formData); }}>
+        <form onSubmit={handleSubmit}>
           <div className="form-field">
             <label>Reward Title</label>
             <input
@@ -269,7 +397,7 @@ const CreateRewardOverlay = ({ onClose }) => {
               <label>Reward</label>
               <div className="input-with-icon">
                 <input
-                  type="text"
+                  type="number"
                   name="rewardAmount"
                   placeholder="Enter task reward"
                   value={formData.rewardAmount}
@@ -302,7 +430,6 @@ const CreateRewardOverlay = ({ onClose }) => {
             </div>
           </div>
 
-          {/* Update the form row for beneficiary selection */}
           <div className="form-row">
             <div className="form-field">
               <label>Beneficiary</label>
@@ -338,6 +465,11 @@ const CreateRewardOverlay = ({ onClose }) => {
                 </label>
               </p>
               <p className="support-text">Support: jpg, jpeg, png</p>
+              {formData.image && (
+                <div className="image-preview">
+                  <img src={URL.createObjectURL(formData.image)} alt="Preview" />
+                </div>
+              )}
             </div>
           </div>
 
@@ -346,6 +478,18 @@ const CreateRewardOverlay = ({ onClose }) => {
           </button>
         </form>
       </div>
+      {showSuccessOverlay && (
+        <div className="success-overlay">
+          <div className="success-content">
+            <img className="success-icon" src={`${process.env.PUBLIC_URL}/success.png`} alt="Success" />
+            <h2>Success!</h2>
+            <p>Reward {isEditing ? 'updated' : 'created'} successfully.</p>
+            <button className="success-proceed-button" onClick={handleCloseSuccessOverlay}>
+              Proceed
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
