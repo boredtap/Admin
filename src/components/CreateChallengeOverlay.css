@@ -31,6 +31,7 @@
 .overlay-header h2 {
   margin: 0;
   font-size: 24px;
+  color: orange;
 }
 
 .close-button {
@@ -57,22 +58,29 @@
   display: block;
   margin-bottom: 8px;
   font-size: 14px;
+  color: orange;
 }
 
-.form-field input,
-.form-field select,
-.form-field textarea {
+.form-input, .form-input.select, .form-input.textarea {
   width: 100%;
-  height: 48px;
   background-color: #19191A;
   border: 1px solid #363638;
   border-radius: 8px;
-  padding: 0 8px;
+  padding: 12px 8px;
   color: white;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
-.form-field textarea {
+.form-input.select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,..."); /* Add dropdown arrow if needed */
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.form-input.textarea {
   height: 100px;
   resize: vertical;
 }
@@ -82,18 +90,11 @@
   position: relative;
 }
 
-.input-with-icon input {
-  width: 100%;
-  height: 48px;
-  background-color: #19191A;
-  border: 1px solid #363638;
-  border-radius: 8px;
-  padding: 0 40px 0 12px;
-  color: white;
-  font-size: 14px;
+.input-with-icon .form-input {
+  padding-right: 40px;
 }
 
-.input-with-icon img {
+.input-icon {
   position: absolute;
   right: 12px;
   top: 50%;
@@ -118,16 +119,16 @@
 
 .dropdown-toggle {
   width: 100%;
-  height: 48px;
   background-color: #19191A;
   border: 1px solid #363638;
   border-radius: 8px;
-  padding: 0 12px;
+  padding: 12px 12px;
   color: white;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
+  font-size: 14px;
 }
 
 .dropdown-icon {
@@ -185,6 +186,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
+  color: #666;
 }
 
 .upload-area img {
@@ -196,7 +198,6 @@
 .upload-area p {
   margin: 0 0 4px 0;
   font-size: 14px;
-  color: #666;
 }
 
 .browse-label {
@@ -240,6 +241,36 @@
 .custom-time-picker {
   width: 300px;
   padding: 16px;
+}
+
+.custom-time-picker.modern {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.time-input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-input {
+  width: 60px;
+  height: 40px;
+  background-color: #19191A;
+  border: 1px solid #363638;
+  border-radius: 8px;
+  padding: 0 8px;
+  color: white;
+  font-size: 14px;
+  text-align: center;
+}
+
+.time-input:focus {
+  outline: none;
+  border-color: orange;
+  box-shadow: 0 0 5px orange;
 }
 
 /* Submit Button */
@@ -315,4 +346,12 @@
 
 .success-proceed-button:hover {
   background-color: orange;
+}
+
+/* Error Message */
+.error-message {
+  color: red;
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 14px;
 }
