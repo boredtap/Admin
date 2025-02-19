@@ -355,3 +355,23 @@
   margin-bottom: 16px;
   font-size: 14px;
 }
+
+.success-new-button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.success-new-button:hover {
+  background-color: #45a049;
+}
+
+.success-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
