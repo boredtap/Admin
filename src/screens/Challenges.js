@@ -18,7 +18,9 @@ const Challenges = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showCreateChallengeOverlay, setShowCreateChallengeOverlay] = useState(false);
-
+  const [showDeleteOverlay, setShowDeleteOverlay] = useState(false);
+  const [selectedChallengeId, setSelectedChallengeId] = useState(null);
+  const [selectedChallenge, setSelectedChallenge] = useState(null);
   // Filters for Challenges
   const [filters, setFilters] = useState({
     participants: {
@@ -40,11 +42,96 @@ const Challenges = () => {
   });
 
   useEffect(() => {
-    fetch('/api/challenges-data')
-      .then(response => response.json())
-      .then(data => setChallengesData(data))
-      .catch(error => console.error('Error fetching challenges data:', error));
+    const fetchChallenges = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          console.error("No access token found");
+          return;
+        }
+  
+        // Fetch Ongoing Challenges
+        const ongoingResponse = await fetch(
+          "https://bt-coins.onrender.com/admin/challenge/get_challenges?status=ongoing",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+  
+        // Fetch Completed Challenges
+        const completedResponse = await fetch(
+          "https://bt-coins.onrender.com/admin/challenge/get_challenges?status=completed",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+  
+        if (!ongoingResponse.ok || !completedResponse.ok) {
+          throw new Error("Failed to fetch challenges");
+        }
+  
+        const ongoingData = await ongoingResponse.json();
+        const completedData = await completedResponse.json();
+  
+        setChallengesData({
+          "Opened Challenges": ongoingData,
+          "Completed Challenges": completedData,
+        });
+      } catch (error) {
+        console.error("Error fetching challenges:", error);
+      }
+    };
+  
+    fetchChallenges();
   }, []);
+
+  const fetchChallengeById = async (challengeId) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+  
+      const response = await fetch(
+        `https://bt-coins.onrender.com/admin/challenge/get_challenge_by_id/${challengeId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error("Failed to fetch challenge details");
+      }
+  
+      const challenge = await response.json();
+      return challenge;
+    } catch (error) {
+      console.error("Error fetching challenge by ID:", error);
+      return null;
+    }
+  };
+
+  const handleEditChallenge = async (challengeId) => {
+    const challenge = await fetchChallengeById(challengeId);
+    if (challenge) {
+      setSelectedChallenge(challenge);
+      setShowCreateChallengeOverlay(true);
+    }
+  };
+  
+  
+
+
+  
+  
+  
 
   // Reusing date formatting function
   const formatDate = (date) => {
@@ -181,14 +268,70 @@ const Challenges = () => {
     setCurrentPage(1);
   };
 
-  const handleDelete = () => {
-    const updatedData = challengesData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    setChallengesData(prev => ({
-      ...prev,
-      [activeTab]: updatedData
-    }));
-    setSelectedRows([]);
+  const handleDeleteChallenge = (challengeId) => {
+    setSelectedChallengeId(challengeId);
+    setShowDeleteOverlay(true);
   };
+  
+  const confirmDeleteChallenge = async () => {
+    if (!selectedChallengeId && selectedRows.length === 0) return;
+  
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+  
+      if (selectedChallengeId) {
+        // Deleting a single challenge from the Action Dropdown
+        await fetch(`https://bt-coins.onrender.com/admin/challenge/delete_challenge/${selectedChallengeId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        setChallengesData((prev) => ({
+          ...prev,
+          [activeTab]: prev[activeTab].filter((challenge) => challenge.id !== selectedChallengeId),
+        }));
+      } else {
+        // Deleting multiple selected challenges
+        const challengesToDelete = challengesData[activeTab].filter((_, index) => selectedRows.includes(index));
+  
+        for (const challenge of challengesToDelete) {
+          await fetch(`https://bt-coins.onrender.com/admin/challenge/delete_challenge/${challenge.id}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        }
+  
+        setChallengesData((prev) => ({
+          ...prev,
+          [activeTab]: prev[activeTab].filter((_, index) => !selectedRows.includes(index)),
+        }));
+      }
+  
+      alert("Challenge(s) deleted successfully!");
+  
+    } catch (error) {
+      console.error("Error deleting challenge(s):", error);
+    } finally {
+      setShowDeleteOverlay(false);
+      setSelectedRows([]);
+      setSelectedChallengeId(null);
+    }
+  };
+  
+  const handleDelete = () => {
+    if (selectedRows.length === 0) {
+      alert("Please select a challenge to delete.");
+      return;
+    }
+  
+    setShowDeleteOverlay(true);
+  };
+  
 
   const filteredData = challengesData[activeTab].filter(challenge => {
     const participantsMatch = Object.keys(filters.participants).some(participant => filters.participants[participant] && challenge.participants === participant);
@@ -325,9 +468,10 @@ const Challenges = () => {
                 )}
               </div>
               <button className="btn delete-btn" onClick={handleDelete}>
-                <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
-                Delete
-              </button>
+              <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
+              Delete
+            </button>
+
             </div>
           </div>
 
@@ -361,28 +505,29 @@ const Challenges = () => {
               <div className="table-cell radio-column">
                 <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
               </div>
-              <div className="table-cell">{challenge.challengeName}</div>
+              <div className="table-cell">{challenge.name}</div>
               <div className="table-cell">{challenge.description}</div>
-              <div className="table-cell">{formatDate(challenge.startDate)}</div>
+              <div className="table-cell">{formatDate(new Date(challenge.launch_date))}</div>
               <div className="table-cell reward-cell">
                 <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Reward" className="reward-icon" />
                 {challenge.reward}
               </div>
-              <div className="table-cell">{challenge.remainingTime}</div>
-              <div className="table-cell">{challenge.participants}</div>
-              <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
-                <span>Action</span>
+              <div className="table-cell">{challenge.remaining_time}</div>
+                <div className="table-cell">{challenge.participants.join(", ")}</div>
+                <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
+                  <span>Action</span>
                 <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
                 {showActionDropdown === index && (
                   <div className="action-dropdown">
-                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Edit */ }}>
+                    <div className="dropdown-item" onClick={() => handleEditChallenge(true, challenge.id)}>
                       <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
                       <span>Edit</span>
                     </div>
-                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Delete */ }}>
-                      <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
-                      <span>Delete</span>
-                    </div>
+                    <div className="dropdown-item" onClick={() => handleDeleteChallenge(challenge.id)}>
+                    <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
+                    <span>Delete</span>
+                  </div>
+
                   </div>
                 )}
               </div>
@@ -430,10 +575,41 @@ const Challenges = () => {
           
           {/* Create new challenge overlay */}
           {showCreateChallengeOverlay && (
-            <CreateChallengeOverlay 
-              onClose={() => setShowCreateChallengeOverlay(false)}
+            <CreateChallengeOverlay
+              onClose={() => {
+                setShowCreateChallengeOverlay(false);
+                setSelectedChallenge(null);
+              }}
+              editingChallenge={selectedChallenge}
             />
           )}
+
+
+            {showDeleteOverlay && (
+              <div className="overlay-backdrop">
+                <div className="overlay-content">
+                  <center>
+                    <img
+                      src={`${process.env.PUBLIC_URL}/Red Delete.png`}
+                      alt="Delete Icon"
+                      className="overlay-icon"
+                    />
+                  </center>
+                  <h2>Delete Challenge?</h2>
+                  <p>Are you sure you want to delete this challenge? This action cannot be undone.</p>
+                  <button className="overlay-submit-button" onClick={confirmDeleteChallenge}>
+                    Confirm Delete
+                  </button>
+                  <button 
+                    className="overlay-back-link" 
+                    onClick={() => setShowDeleteOverlay(false)} 
+                    style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
         </div>
       </div>
     </div>
