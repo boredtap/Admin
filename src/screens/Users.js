@@ -7,6 +7,7 @@ import './Users.css';
 
 const Users = () => {
   const [selectedRows, setSelectedRows] = useState([]);
+  const [error, setError] = useState(null); // Keep error for handling fetch errors
   const [activeTab, setActiveTab] = useState("All Users");
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -41,15 +42,38 @@ const Users = () => {
   });
 
   useEffect(() => {
-    // Fetch data from backend
-    fetch('/api/users-data')
-      .then(response => response.json())
-      .then(data => setUsersData(data))
-      .catch(error => console.error('Error fetching users data:', error));
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) throw new Error("No access token found");
+
+        const response = await fetch("https://bt-coins.onrender.com/admin/user_management/users", {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch users");
+
+        const data = await response.json();
+        setUsersData(prev => ({
+          ...prev,
+          "All Users": data,
+          "Top 1000": data.slice(0, 1000)
+        }));
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+
+    fetchUsers();
   }, []);
 
-  const formatDate = (date) => {
-    if (!date) return 'DD-MM-YYYY';
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'DD-MM-YYYY';
+    const date = new Date(dateStr);
     return date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
@@ -93,9 +117,9 @@ const Users = () => {
     return (
       <div className="custom-date-picker">
         <div className="date-picker-header">
-          <button onClick={() => changeMonth(-1)}>&lt;</button>
+          <button onClick={() => changeMonth(-1)}></button>
           <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
-          <button onClick={() => changeMonth(1)}>&gt;</button>
+          <button onClick={() => changeMonth(1)}></button>
         </div>
         <div className="weekdays">
           {weekDays.map(day => (
@@ -159,13 +183,9 @@ const Users = () => {
 
   const handleRowClick = (index, event) => {
     event.stopPropagation();
-    setSelectedRows(prev => {
-      if (prev.includes(index)) {
-        return prev.filter(row => row !== index);
-      } else {
-        return [...prev, index];
-      }
-    });
+    setSelectedRows(prev => 
+      prev.includes(index) ? prev.filter(row => row !== index) : [...prev, index]
+    );
   };
 
   const handleActionClick = (index, event) => {
@@ -194,13 +214,14 @@ const Users = () => {
   };
 
   const handleExport = () => {
-    const dataToExport = filteredData.map(user => ({
-      'User Name': user.name,
-      'Level': user.level,
-      'Coin Earned': user.coins.value,
-      'Invite Count': user.inviteCount,
-      'Registration Date': user.registrationDate,
-      'Status': user.status,
+    const dataToExport = usersData[activeTab].map(user => ({
+      'Telegram ID': user.telegram_user_id,
+      'Username': user.username,
+      'Level': `${user.level} - ${user.level_name}`,
+      'Coins Earned': user.coins_earned,
+      'Invite Count': user.invite_count,
+      'Registration Date': formatDate(user.registration_date),
+      'Status': user.status
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -210,10 +231,12 @@ const Users = () => {
   };
 
   const filteredData = usersData[activeTab].filter(user => {
-    const statusMatch = Object.keys(filters.status).some(status => filters.status[status] && user.status === status);
-    const levelMatch = Object.keys(filters.level).some(level => filters.level[level] && user.level.includes(level));
-    return (!Object.values(filters.status).includes(true) || statusMatch) &&
-           (!Object.values(filters.level).includes(true) || levelMatch);
+    const statusMatch = Object.keys(filters.status).some(status => 
+      filters.status[status] && user.status.toLowerCase() === status.toLowerCase());
+    const levelMatch = Object.keys(filters.level).some(level => 
+      filters.level[level] && user.level_name.toLowerCase().includes(level.toLowerCase().split('-')[0]));
+    return (!Object.values(filters.status).some(v => v) || statusMatch) &&
+           (!Object.values(filters.level).some(v => v) || levelMatch);
   });
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
@@ -224,8 +247,8 @@ const Users = () => {
       <NavigationPanel />
       <div className="main-wrapper">
         <AppBar screenName="Users" />
+        {error && <div>Error: {error}</div>} {/* Only show error if it exists */}
         <div className="user-management-body-frame">
-          {/* Pagination Section */}
           <div className="user-management-header">
             <div className="user-management-pagination">
               {["All Users", "Top 1000"].map(tab => (
@@ -248,7 +271,6 @@ const Users = () => {
 
           <div className="user-management-divider"></div>
 
-          {/* Search Bar and Buttons */}
           <div className="user-management-toolbar">
             <div className="search-bar">
               <img src={`${process.env.PUBLIC_URL}/search.png`} alt="Search" className="search-icon" />
@@ -328,7 +350,6 @@ const Users = () => {
 
           <div className="user-management-divider"></div>
 
-          {/* Table Header */}
           <div className="user-management-table-header">
             <div className="table-heading radio-column">
               <div className="custom-radio"></div>
@@ -339,58 +360,58 @@ const Users = () => {
             <div className="table-heading">Invite Count</div>
             <div className="table-heading">Registration Date</div>
             <div className="table-heading">Status</div>
-            <div className="table-heading action-heading"> 
-              <span>Action</span>
-            </div>
+            <div className="table-heading action-heading">Action</div>
           </div>
 
           <div className="user-management-divider"></div>
 
-          {/* Table Rows */}
-          {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((user, index) => (
-            <div
-              key={index}
-              className={`user-management-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
-              onClick={(e) => handleRowClick(index, e)}
-            >
-              <div className="table-cell radio-column">
-                <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
-              </div>
-              <div className="table-cell">{user.name}</div>
-              <div className="table-cell">{user.level}</div>
-              <div className="table-cell reward-cell">
-                <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin" className="reward-icon" />
-                {user.coins.value}
-              </div>
-              <div className="table-cell">{user.inviteCount}</div>
-              <div className="table-cell">{user.registrationDate}</div>
-              <div className="table-cell">
-                <span className={`status-btn ${user.status.toLowerCase()}`}>
-                  {user.status}
-                </span>
-              </div>
-              <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
-                <span>Action</span>
-                <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
-                {showActionDropdown === index && (
-                  <div className="action-dropdown">
-                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Edit */ }}>
-                      <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
-                      <span>Edit</span>
+          {filteredData.length === 0 ? (
+            <div>No users to display</div>
+          ) : (
+            filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((user, index) => (
+              <div
+                key={index}
+                className={`user-management-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
+                onClick={(e) => handleRowClick(index, e)}
+              >
+                <div className="table-cell radio-column">
+                  <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
+                </div>
+                <div className="table-cell">{user.username}</div>
+                <div className="table-cell">{user.level_name}</div>
+                <div className="table-cell reward-cell">
+                  <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin" className="reward-icon" />
+                  {user.coins_earned}
+                </div>
+                <div className="table-cell">{user.invite_count}</div>
+                <div className="table-cell">{formatDate(user.registration_date)}</div>
+                <div className="table-cell">
+                  <span className={`status-btn ${user.status.toLowerCase()}`}>
+                    {user.status}
+                  </span>
+                </div>
+                <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
+                  <span>Action</span>
+                  <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
+                  {showActionDropdown === index && (
+                    <div className="action-dropdown">
+                      <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Edit */ }}>
+                        <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
+                        <span>Edit</span>
+                      </div>
+                      <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
+                        <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
+                        <span>Delete</span>
+                      </div>
                     </div>
-                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
-                      <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
-                      <span>Delete</span>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
 
           <div className="user-management-divider"></div>
 
-          {/* Footer with Pagination */}
           <div className="table-footer">
             <div className="rows-per-page">
               <span>Show Result:</span>

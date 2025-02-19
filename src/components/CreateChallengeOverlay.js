@@ -1,33 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const clans = ["TON Station", "HiddenCode", "h2o", "Tapper Legends"];
 const levels = [
-  'All Users', 'Novice-Lv 1', 'Explorer-Lv 2', 'Apprentice-Lv 3',
-  'Warrior-Lv 4', 'Master - Lv 5', 'Champion - Lv 6',
-  'Tactician- Lv 7', 'Specialist - Lv 8', 'Conqueror -Lv 9',
-  'Legend - Lv 10'
+  'all_users', 'novice', 'explorer', 'apprentice',
+  'warrior', 'master', 'champion',
+  'tactician', 'specialist', 'conqueror',
+  'legend'
 ];
 
-const CreateChallengeOverlay = ({ onClose }) => { 
+const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing }) => {
   const [formData, setFormData] = useState({
     challengeName: '',
     challengeReward: '',
     challengeDescription: '',
-    launchDate: null,
-    challengeDuration: null,
+    launchDate: new Date(),
+    challengeDuration: '00:00:00',
     participantType: '',
     selectedClans: [],
     selectedLevels: [],
     specificUsers: '',
     image: null,
+    imagePreview: ''
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const participantTypes = ['All Users', 'Clan(s)', 'Level(s)', 'Specific User(s)'];
-  const [participantFieldLabel, setParticipantFieldLabel] = useState('');
-  const [showDropdown, setShowDropdown] = useState({ clans: false, levels: false });
+  const [showDropdown, setShowDropdown] = useState({ 
+    beneficiaries: false,
+    clans: false, 
+    levels: false 
+  });
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+  useEffect(() => {
+    if (challengeToEdit) {
+      setFormData({
+        challengeName: challengeToEdit.name || '',
+        challengeReward: challengeToEdit.reward || '',
+        challengeDescription: challengeToEdit.description || '',
+        launchDate: challengeToEdit.launch_date ? new Date(challengeToEdit.launch_date) : new Date(),
+        challengeDuration: challengeToEdit.duration || '00:00:00',
+        participantType: getParticipantTypeReverse(challengeToEdit.participants),
+        selectedClans: challengeToEdit.participants === 'clan' ? challengeToEdit.participantsDetail : [],
+        selectedLevels: challengeToEdit.participants === 'level' ? challengeToEdit.participantsDetail : [],
+        specificUsers: challengeToEdit.participants === 'specific_users' ? challengeToEdit.participantsDetail.join(', ') : '',
+        image: null,
+        imagePreview: challengeToEdit.image_url || ''
+      });
+    }
+  }, [challengeToEdit]);
+
+  const getParticipantTypeReverse = (participants) => {
+    switch (participants) {
+      case 'all_users': return 'All Users';
+      case 'clan': return 'Clan(s)';
+      case 'level': return 'Level(s)';
+      case 'specific_users': return 'Specific User(s)';
+      default: return '';
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -45,27 +84,15 @@ const CreateChallengeOverlay = ({ onClose }) => {
       selectedLevels: [],
       specificUsers: ''
     }));
-    // Set the label based on the participant type
-    switch (type) {
-      case 'Clan(s)':
-        setParticipantFieldLabel('Clan(s)');
-        break;
-      case 'Level(s)':
-        setParticipantFieldLabel('Level(s)');
-        break;
-      case 'Specific User(s)':
-        setParticipantFieldLabel('Specific User(s)');
-        break;
-      default:
-        setParticipantFieldLabel('');
-    }
+    setShowDropdown(prev => ({ ...prev, beneficiaries: false }));
   };
 
   const toggleDropdown = (field) => {
-    setShowDropdown(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }));
+    setShowDropdown(prev => {
+      const newState = { beneficiaries: false, clans: false, levels: false };
+      newState[field] = !prev[field];
+      return newState;
+    });
   };
 
   const handleCheckboxChange = (field, item) => {
@@ -78,24 +105,24 @@ const CreateChallengeOverlay = ({ onClose }) => {
   };
 
   const renderParticipantField = () => {
-    if (!participantFieldLabel) return null;
+    if (!formData.participantType || formData.participantType === 'All Users') return null;
 
     let content;
-    switch (participantFieldLabel) {
+    switch (formData.participantType) {
       case 'Clan(s)':
         content = (
-          <div className="multi-select-field">
-            <select 
-              className="form-select" 
-              value="" 
-              onChange={() => toggleDropdown('clans')}
+          <div className="dropdown-container">
+            <div 
+              className="dropdown-toggle"
+              onClick={() => toggleDropdown('clans')}
             >
-              <option value="">Select Clans</option>
-            </select>
+              {formData.selectedClans.length > 0 ? formData.selectedClans.join(', ') : "Select Clans"}
+              <span className="dropdown-icon">▼</span>
+            </div>
             {showDropdown.clans && (
-              <div className="checkbox-group">
+              <div className="dropdown-menu">
                 {clans.map((clan, index) => (
-                  <label className="checkbox-label" key={index}>
+                  <label className="dropdown-item checkbox-label" key={index}>
                     <input 
                       type="checkbox" 
                       checked={formData.selectedClans.includes(clan)} 
@@ -111,18 +138,18 @@ const CreateChallengeOverlay = ({ onClose }) => {
         break;
       case 'Level(s)':
         content = (
-          <div className="multi-select-field">
-            <select 
-              className="form-select" 
-              value="" 
-              onChange={() => toggleDropdown('levels')}
+          <div className="dropdown-container">
+            <div 
+              className="dropdown-toggle"
+              onClick={() => toggleDropdown('levels')}
             >
-              <option value="">Select Levels</option>
-            </select>
+              {formData.selectedLevels.length > 0 ? formData.selectedLevels.join(', ') : "Select Levels"}
+              <span className="dropdown-icon">▼</span>
+            </div>
             {showDropdown.levels && (
-              <div className="checkbox-group">
+              <div className="dropdown-menu">
                 {levels.map((level, index) => (
-                  <label className="checkbox-label" key={index}>
+                  <label className="dropdown-item checkbox-label" key={index}>
                     <input 
                       type="checkbox" 
                       checked={formData.selectedLevels.includes(level)} 
@@ -150,11 +177,11 @@ const CreateChallengeOverlay = ({ onClose }) => {
         break;
       default:
         content = null;
-    } 
+    }
 
-    return (
+    return content && (
       <div className="form-field">
-        <label>{participantFieldLabel}</label>
+        <label>{formData.participantType}</label>
         {content}
       </div>
     );
@@ -165,7 +192,8 @@ const CreateChallengeOverlay = ({ onClose }) => {
     if (file) {
       setFormData(prev => ({
         ...prev,
-        image: file
+        image: file,
+        imagePreview: URL.createObjectURL(file)
       }));
     }
   };
@@ -178,98 +206,13 @@ const CreateChallengeOverlay = ({ onClose }) => {
     setShowDatePicker(false);
   };
 
-  const handleTimeChange = (time) => {
-    const [hours, minutes, seconds] = time.split(':').map(Number);
-    const now = new Date();
-    const durationDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, seconds);
+  const handleTimeChange = (event) => {
     setFormData(prev => ({
       ...prev,
-      challengeDuration: durationDate
+      challengeDuration: event.target.value
     }));
-    setShowTimePicker(false);
   };
 
-  const CustomDatePicker = () => {
-    const days = getDaysInMonth(currentMonth);
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
-    return (
-      <div className="custom-date-picker">
-        <div className="date-picker-header">
-          <button onClick={() => changeMonth(-1)}></button>
-          <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
-          <button onClick={() => changeMonth(1)}></button>
-        </div>
-        <div className="weekdays">
-          {weekDays.map(day => (
-            <div key={day} className="weekday">{day}</div>
-          ))}
-        </div>
-        <div className="days-grid">
-          {days.map((date, index) => (
-            <div
-              key={index}
-              className={`day ${date ? 'valid-day' : ''} ${
-                formData.launchDate && date &&
-                date.toDateString() === formData.launchDate.toDateString()
-                  ? 'selected'
-                  : ''
-              }`}
-              onClick={() => date && handleDateChange(date)}
-            >
-              {date ? date.getDate() : ''}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  const CustomTimePicker = () => {
-    const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-    const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
-    const seconds = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
-    const selectedTime = formData.challengeDuration || new Date();
-
-    return (
-      <div className="custom-time-picker" style={{ background: 'white', borderRadius: '8px', padding: '16px', zIndex: '1000' }}>
-        <div className="time-picker-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span>Select Time</span>
-        </div>
-        <div className="time-selector" style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <select 
-            style={{ flex: 1, marginRight: '5px' }}
-            value={selectedTime.getHours().toString().padStart(2, '0')} 
-            onChange={(e) => handleTimeChange(`${e.target.value}:${selectedTime.getMinutes().toString().padStart(2, '0')}:${selectedTime.getSeconds().toString().padStart(2, '0')}`)}
-          >
-            {hours.map(h => <option key={h} value={h}>{h}</option>)}
-          </select>
-          :
-          <select 
-            style={{ flex: 1, margin: '0 5px' }}
-            value={selectedTime.getMinutes().toString().padStart(2, '0')} 
-            onChange={(e) => handleTimeChange(`${selectedTime.getHours().toString().padStart(2, '0')}:${e.target.value}:${selectedTime.getSeconds().toString().padStart(2, '0')}`)}
-          >
-            {minutes.map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
-          :
-          <select 
-            style={{ flex: 1, marginLeft: '5px' }}
-            value={selectedTime.getSeconds().toString().padStart(2, '0')} 
-            onChange={(e) => handleTimeChange(`${selectedTime.getHours().toString().padStart(2, '0')}:${selectedTime.getMinutes().toString().padStart(2, '0')}:${e.target.value}`)}
-          >
-            {seconds.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-      </div>
-    );
-  };
-
-  // Date picker helper functions
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -294,17 +237,179 @@ const CreateChallengeOverlay = ({ onClose }) => {
     );
   };
 
+  const CustomDatePicker = () => {
+    const days = getDaysInMonth(currentMonth);
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    return (
+      <div className="custom-date-picker">
+        <div className="date-picker-header">
+          <button onClick={() => changeMonth(-1)}>{"<"}</button>
+          <span>{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
+          <button onClick={() => changeMonth(1)}>{">"}</button>
+        </div>
+        <div className="weekdays">
+          {weekDays.map(weekDay => (
+            <div key={weekDay} className="weekday">{weekDay}</div>
+          ))}
+        </div>
+        <div className="days-grid">
+          {days.map((date, index) => (
+            <div
+              key={index}
+              className={`day ${date ? 'valid-day' : ''} ${formData.launchDate && date && date.toDateString() === formData.launchDate.toDateString() ? 'selected' : ''}`}
+              onClick={() => date && handleDateChange(date)}
+            >
+              {date ? date.getDate() : ''}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const CustomTimePicker = () => {
+    return (
+      <div className="custom-time-picker">
+        <input 
+          type="time" 
+          step="1" 
+          value={formData.challengeDuration}
+          onChange={handleTimeChange}
+        />
+      </div>
+    );
+  };
+
+  const validateFormData = () => {
+    if (!formData.challengeName.trim()) {
+      alert('Please enter a challenge name.');
+      return false;
+    }
+    if (!formData.challengeReward || isNaN(Number(formData.challengeReward))) {
+      alert('Please enter a valid challenge reward.');
+      return false;
+    }
+    if (!formData.launchDate) {
+      alert('Please select a launch date.');
+      return false;
+    }
+    if (!formData.challengeDuration || formData.challengeDuration.split(':').some(part => part === '')) {
+      alert('Please set a valid challenge duration.');
+      return false;
+    }
+    if (!formData.participantType) {
+      alert('Please select a participant type.');
+      return false;
+    }
+    if (formData.participantType === 'Clan(s)' && formData.selectedClans.length === 0) {
+      alert('Please select at least one clan.');
+      return false;
+    }
+    if (formData.participantType === 'Level(s)' && formData.selectedLevels.length === 0) {
+      alert('Please select at least one level.');
+      return false;
+    }
+    if (formData.participantType === 'Specific User(s)' && !formData.specificUsers.trim()) {
+      alert('Please enter at least one user.');
+      return false;
+    }
+    if (!formData.image && !formData.imagePreview) {
+      alert('Please upload an image for the challenge.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateFormData()) return;
+
+    try {
+      const formDataBody = new FormData();
+      
+      const queryParams = new URLSearchParams({
+        name: formData.challengeName,
+        reward: formData.challengeReward,
+        description: formData.challengeDescription,
+        launch_date: formData.launchDate.toISOString().split('T')[0],
+        duration: formData.challengeDuration,
+        participants: getParticipantType(formData.participantType)
+      });
+
+      if (formData.participantType === 'Clan(s)') {
+        formData.selectedClans.forEach(clan => formDataBody.append('clan', clan));
+      } else if (formData.participantType === 'Level(s)') {
+        formData.selectedLevels.forEach(level => formDataBody.append('level', level));
+      } else if (formData.participantType === 'Specific User(s)') {
+        formDataBody.append('specific_users', formData.specificUsers.split(',').map(user => user.trim()));
+      }
+      if (formData.image) {
+        formDataBody.append('image', formData.image);
+      } else {
+        formDataBody.append('image_url', formData.imagePreview); 
+      }
+
+      const endpoint = isEditing ? 'update_challenge' : 'create_challenge';
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const response = await fetch(
+        `https://bt-coins.onrender.com/admin/challenge/${endpoint}?${queryParams.toString()}&challenge_id=${challengeToEdit ? challengeToEdit.id : ''}`,
+        {
+          method: method,
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+          body: formDataBody,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok.');
+      }
+
+      const result = await response.json();
+      setShowSuccessOverlay(true);
+      onSubmit(result);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred while submitting the challenge: ' + error.message);
+    }
+  };
+
+  const getParticipantType = (type) => {
+    switch (type) {
+      case 'All Users': return 'all_users';
+      case 'Clan(s)': return 'clan';
+      case 'Level(s)': return 'level';
+      case 'Specific User(s)': return 'specific_users';
+      default: return '';
+    }
+  };
+
+  const handleCloseSuccessOverlay = () => {
+    setShowSuccessOverlay(false);
+    onClose();
+  };
+
+  const participantTypes = ['All Users', 'Clan(s)', 'Level(s)', 'Specific User(s)'];
+
   return (
     <div className="overlay-backdrop">
       <div className="create-task-overlay">
         <div className="overlay-header">
-          <h2>Create New Challenge</h2>
+          <h2>{isEditing ? 'Update Challenge' : 'Create New Challenge'}</h2>
           <button className="close-button" onClick={onClose}>
             <img src={`${process.env.PUBLIC_URL}/cancel.png`} alt="Cancel" />
           </button>
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); console.log(formData); }}>
+        <form onSubmit={handleSubmit}>
           <div className="form-field">
             <label>Challenge Name</label>
             <input
@@ -318,10 +423,10 @@ const CreateChallengeOverlay = ({ onClose }) => {
 
           <div className="form-row">
             <div className="form-field">
-              <label>Challenge Reward</label>
+              <label>Reward</label>
               <div className="input-with-icon">
                 <input
-                  type="text"
+                  type="number"
                   name="challengeReward"
                   placeholder="Enter challenge reward"
                   value={formData.challengeReward}
@@ -332,9 +437,8 @@ const CreateChallengeOverlay = ({ onClose }) => {
             </div>
 
             <div className="form-field">
-              <label>Challenge Description</label>
-              <input
-                type="text"
+              <label>Description</label>
+              <textarea
                 name="challengeDescription"
                 placeholder="Enter challenge description"
                 value={formData.challengeDescription}
@@ -345,7 +449,7 @@ const CreateChallengeOverlay = ({ onClose }) => {
 
           <div className="form-row">
             <div className="form-field">
-              <label>Challenge Launch Date</label>
+              <label>Launch Date</label>
               <div className="input-with-icon">
                 <input
                   type="text"
@@ -367,20 +471,21 @@ const CreateChallengeOverlay = ({ onClose }) => {
             </div>
 
             <div className="form-field">
-              <label>Challenge Duration</label>
+              <label>Duration</label>
               <div className="input-with-icon">
                 <input
                   type="text"
                   placeholder="HH:MM:SS"
-                  value={formData.challengeDuration ? 
-                    `${formData.challengeDuration.getHours().toString().padStart(2, '0')}:${formData.challengeDuration.getMinutes().toString().padStart(2, '0')}:${formData.challengeDuration.getSeconds().toString().padStart(2, '0')}` 
-                    : ''
-                  }
+                  value={formData.challengeDuration}
                   readOnly
                 />
-                <img src={`${process.env.PUBLIC_URL}/time.png`} alt="Time" onClick={() => setShowTimePicker(!showTimePicker)} />
+                <img
+                  src={`${process.env.PUBLIC_URL}/time.png`}
+                  alt="Time"
+                  onClick={() => setShowTimePicker(!showTimePicker)}
+                />
                 {showTimePicker && (
-                  <div className="time-picker-container" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, marginTop: '4px' }}>
+                  <div className="time-picker-container">
                     <CustomTimePicker />
                   </div>
                 )}
@@ -388,10 +493,9 @@ const CreateChallengeOverlay = ({ onClose }) => {
             </div>
           </div>
 
-          {/* Update the form row for participant selection */}
           <div className="form-row">
             <div className="form-field">
-              <label>Challenge Participant</label>
+              <label>Participant</label>
               <select
                 name="participantType"
                 value={formData.participantType}
@@ -424,6 +528,11 @@ const CreateChallengeOverlay = ({ onClose }) => {
                 </label>
               </p>
               <p className="support-text">Support: jpg, jpeg, png</p>
+              {formData.imagePreview && (
+                <div className="image-preview">
+                  <img src={formData.imagePreview} alt="Preview" />
+                </div>
+              )}
             </div>
           </div>
 
@@ -432,6 +541,18 @@ const CreateChallengeOverlay = ({ onClose }) => {
           </button>
         </form>
       </div>
+      {showSuccessOverlay && (
+        <div className="success-overlay">
+          <div className="success-content">
+            <img className="success-icon" src={`${process.env.PUBLIC_URL}/success.png`} alt="Success" />
+            <h2>Success!</h2>
+            <p>Challenge {isEditing ? 'updated' : 'created'} successfully.</p>
+            <button className="success-proceed-button" onClick={handleCloseSuccessOverlay}>
+              Proceed
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
