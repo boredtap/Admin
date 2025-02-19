@@ -15,7 +15,7 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
     challengeReward: '',
     challengeDescription: '',
     launchDate: new Date(),
-    challengeDuration: { hours: 0, minutes: 0, seconds: 0 },
+    challengeDuration: { days: 0, hours: 0, minutes: 0, seconds: 0 },
     participantType: '',
     selectedClans: [],
     selectedLevels: [],
@@ -34,6 +34,7 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
   });
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); // New state to track submission
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -44,12 +45,18 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
 
   useEffect(() => {
     if (challengeToEdit) {
+      const durationParts = challengeToEdit.duration?.split(':') || ['0', '0', '0', '0'];
       setFormData({
         challengeName: challengeToEdit.name || '',
         challengeReward: challengeToEdit.reward?.toString() || '',
         challengeDescription: challengeToEdit.description || '',
         launchDate: challengeToEdit.launch_date ? new Date(challengeToEdit.launch_date) : new Date(),
-        challengeDuration: parseDuration(challengeToEdit.duration || '00:00:00'),
+        challengeDuration: {
+          days: parseInt(durationParts[0]) || 0,
+          hours: parseInt(durationParts[1]) || 0,
+          minutes: parseInt(durationParts[2]) || 0,
+          seconds: parseInt(durationParts[3]) || 0
+        },
         participantType: getParticipantTypeReverse(challengeToEdit.participants || 'all_users'),
         selectedClans: challengeToEdit.participants === 'clan' ? challengeToEdit.participantsDetail || [] : [],
         selectedLevels: challengeToEdit.participants === 'level' ? challengeToEdit.participantsDetail || [] : [],
@@ -60,16 +67,11 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
     }
   }, [challengeToEdit]);
 
-  const parseDuration = (duration) => {
-    const parts = duration.split(':').map(Number);
-    return {
-      hours: parts[0] || 0,
-      minutes: parts[1] || 0,
-      seconds: parts[2] || 0
-    };
+  const formatDurationForBackend = (duration) => {
+    return `00:${String(duration.hours).padStart(2, '0')}:${String(duration.minutes).padStart(2, '0')}:${String(duration.seconds).padStart(2, '0')}`;
   };
 
-  const formatDuration = (duration) => {
+  const formatDurationForDisplay = (duration) => {
     return `${String(duration.hours).padStart(2, '0')}:${String(duration.minutes).padStart(2, '0')}:${String(duration.seconds).padStart(2, '0')}`;
   };
 
@@ -96,7 +98,7 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
       ...prev,
       challengeDuration: {
         ...prev.challengeDuration,
-        [field]: Math.max(0, parseInt(value) || 0)
+        [field]: field === 'days' ? Math.max(0, parseInt(value) || 0) : Math.max(0, parseInt(value) || 0)
       }
     }));
   };
@@ -368,10 +370,34 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
     return true;
   };
 
+  const resetForm = () => {
+    setFormData({
+      challengeName: '',
+      challengeReward: '',
+      challengeDescription: '',
+      launchDate: new Date(),
+      challengeDuration: { days: 0, hours: 0, minutes: 0, seconds: 0 },
+      participantType: '',
+      selectedClans: [],
+      selectedLevels: [],
+      specificUsers: '',
+      image: null,
+      imagePreview: ''
+    });
+    setShowDatePicker(false);
+    setShowTimePicker(false);
+    setShowDropdown({ beneficiaries: false, clans: false, levels: false });
+    setError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true); // Set submitting state to true
 
-    if (!validateFormData()) return;
+    if (!validateFormData()) {
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const formDataBody = new FormData();
@@ -381,11 +407,10 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
         description: encodeURIComponent(formData.challengeDescription),
         launch_date: formData.launchDate.toISOString().split('T')[0],
         reward: formData.challengeReward,
-        duration: formatDuration(formData.challengeDuration),
+        duration: formatDurationForBackend(formData.challengeDuration),
         participants: getParticipantType(formData.participantType),
       });
 
-      // Add appropriate data to the body if needed
       if (formData.participantType === 'Clan(s)') {
         formData.selectedClans.forEach(clan => formDataBody.append('clan', clan));
       } else if (formData.participantType === 'Level(s)') {
@@ -394,7 +419,6 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
         formData.specificUsers.split(',').map(user => user.trim()).forEach(user => formDataBody.append('specific_users', user));
       }
 
-      //append the image only if it exists, and use the correct field name.
       if (formData.image) {
         formDataBody.append('image', formData.image);
       }
@@ -405,11 +429,8 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
       const endpoint = isEditing ? 'update_challenge' : 'create_challenge';
       const method = isEditing ? 'PUT' : 'POST';
 
-      console.log('Request URL:', `https://bt-coins.onrender.com/admin/challenge/${endpoint}?${queryParams.toString()}`);
-      console.log('Request Body:', Object.fromEntries(formDataBody));
-
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(
         `https://bt-coins.onrender.com/admin/challenge/${endpoint}?${queryParams.toString()}`,
@@ -420,27 +441,27 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
           },
           body: formDataBody,
           signal: controller.signal,
-          mode: 'cors', // Explicitly set mode to cors
+          mode: 'cors',
         }
       );
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        let errorText = await response.text();
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e){
-          errorData = {};
-        }
+        const errorText = await response.text();
+        const errorData = JSON.parse(errorText || '{}');
         throw new Error(`Network response was not ok: ${errorData.message || errorText || 'Server error'}`);
       }
 
       const result = await response.json();
-      setShowSuccessOverlay(true);
+      setShowSuccessOverlay(true); // Show success overlay explicitly
       setError('');
-      onSubmit(result);
+      if (onSubmit && typeof onSubmit === 'function') {
+        onSubmit(result);
+      } else {
+        console.warn('onSubmit is not a function or is undefined');
+      }
+
     } catch (error) {
       if (error.name === 'AbortError') {
         setError('Request timed out. Please try again.');
@@ -450,7 +471,9 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
         console.error('Submission Error:', error);
         setError(error.message);
       }
-      alert('An error occurred while submitting the challenge: ' + error.message);
+      alert('An error occurred while submitting the challenge: ' + (error.message || 'Unknown error'));
+    } finally {
+      setIsSubmitting(false); // Reset submitting state
     }
   };
 
@@ -464,9 +487,13 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
     }
   };
 
-  const handleCloseSuccessOverlay = () => {
+  const handleCloseSuccessOverlay = (createNew = false) => {
     setShowSuccessOverlay(false);
-    onClose();
+    if (createNew) {
+      resetForm(); // Reset form for new challenge
+    } else {
+      onClose(); // Close overlay and return to parent
+    }
   };
 
   const participantTypes = ['All Users', 'Clan(s)', 'Level(s)', 'Specific User(s)'];
@@ -476,7 +503,7 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
       <div className="create-task-overlay">
         <div className="overlay-header">
           <h2>{isEditing ? 'Update Challenge' : 'Create New Challenge'}</h2>
-          <button className="close-button" onClick={onClose}>
+          <button className="close-button" onClick={onClose} disabled={isSubmitting}>
             <img src={`${process.env.PUBLIC_URL}/cancel.png`} alt="Cancel" />
           </button>
         </div>
@@ -493,6 +520,7 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
               value={formData.challengeName}
               onChange={handleInputChange}
               className="form-input"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -507,6 +535,7 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
                   value={formData.challengeReward}
                   onChange={handleInputChange}
                   className="form-input"
+                  disabled={isSubmitting}
                 />
                 <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Coin" className="input-icon" />
               </div>
@@ -521,6 +550,7 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
                 value={formData.challengeDescription}
                 onChange={handleInputChange}
                 className="form-input"
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -535,11 +565,12 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
                   value={formData.launchDate.toISOString().split('T')[0]}
                   readOnly
                   className="form-input"
+                  disabled={isSubmitting}
                 />
                 <img
                   src={`${process.env.PUBLIC_URL}/date.png`}
                   alt="Date"
-                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  onClick={() => !isSubmitting && setShowDatePicker(!showDatePicker)}
                   className="input-icon"
                 />
                 {showDatePicker && (
@@ -555,14 +586,15 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
               <div className="input-with-icon">
                 <input
                   type="text"
-                  value={formatDuration(formData.challengeDuration)}
+                  value={formatDurationForDisplay(formData.challengeDuration)}
                   readOnly
                   className="form-input"
+                  disabled={isSubmitting}
                 />
                 <img
                   src={`${process.env.PUBLIC_URL}/time.png`}
                   alt="Time"
-                  onClick={() => setShowTimePicker(!showTimePicker)}
+                  onClick={() => !isSubmitting && setShowTimePicker(!showTimePicker)}
                   className="input-icon"
                 />
                 {showTimePicker && (
@@ -580,8 +612,9 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
               <select
                 name="participantType"
                 value={formData.participantType}
-                onChange={(e) => handleParticipantSelection(e.target.value)}
+                onChange={(e) => !isSubmitting && handleParticipantSelection(e.target.value)}
                 className="form-input select"
+                disabled={isSubmitting}
               >
                 <option value="">Select participant type</option>
                 {participantTypes.map(type => (
@@ -602,8 +635,9 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
                   <input
                     type="file"
                     accept=".jpg,.jpeg,.png"
-                    onChange={handleImageUpload}
+                    onChange={(e) => !isSubmitting && handleImageUpload(e)}
                     style={{ display: 'none' }}
+                    disabled={isSubmitting}
                   />
                   <span>Browse</span>
                 </label>
@@ -617,8 +651,8 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
             </div>
           </div>
 
-          <button type="submit" className="submit-button">
-            Submit
+          <button type="submit" className="submit-button" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit'}
           </button>
         </form>
 
@@ -628,15 +662,26 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
               <img className="success-icon" src={`${process.env.PUBLIC_URL}/success.png`} alt="Success" />
               <h2>Success!</h2>
               <p>Challenge {isEditing ? 'updated' : 'created'} successfully.</p>
-              <button className="success-proceed-button" onClick={handleCloseSuccessOverlay}>
-                Proceed
-              </button>
+              <div className="success-buttons">
+                <button className="success-proceed-button" onClick={() => handleCloseSuccessOverlay(false)}>
+                  Proceed
+                </button>
+                {!isEditing && (
+                  <button className="success-new-button" onClick={() => handleCloseSuccessOverlay(true)}>
+                    Create New
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
       </div>
     </div>
   );
+};
+
+CreateChallengeOverlay.defaultProps = {
+  onSubmit: () => {},
 };
 
 export default CreateChallengeOverlay;
