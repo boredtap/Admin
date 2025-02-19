@@ -1,18 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import NavigationPanel from '../components/NavigationPanel';
+import CreateLevelOverlay from '../components/CreateLevelOverlay';
 import AppBar from '../components/AppBar';
 import * as XLSX from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";
 import './Levels.css';
 
 const Levels = () => {
+  // State Declarations
   const [selectedRows, setSelectedRows] = useState([]);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("Levels");
   const [showActionDropdown, setShowActionDropdown] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
-
+  const [showDeleteOverlay, setShowDeleteOverlay] = useState(false); // For delete confirmation
+  const [levelToDelete, setLevelToDelete] = useState(null);
+  const [showCreateOverlay, setShowCreateOverlay] = useState(false);
+  const decodeLevelName = (encodedName) => {
+    try {
+      return decodeURIComponent(encodedName);
+    } catch (e) {
+      console.warn('Failed to decode level name:', encodedName, e);
+      return encodedName; // Fallback to original if decoding fails
+    }
+  };
+  
   const [filters, setFilters] = useState({
     level: {
       'Novice': false,
@@ -32,14 +46,37 @@ const Levels = () => {
     "Levels": []
   });
 
+  // Fetch Levels
   useEffect(() => {
-    // Fetch data from backend
-    fetch('/api/levels-data')
-      .then(response => response.json())
-      .then(data => setLevelsData(data))
-      .catch(error => console.error('Error fetching levels data:', error));
+    const fetchLevels = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) throw new Error("No access token found");
+
+        const response = await fetch("https://bt-coins.onrender.com/admin/levels/get_levels", {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch levels");
+
+        const data = await response.json();
+        setLevelsData(prev => ({
+          ...prev,
+          "Levels": data
+        }));
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+
+    fetchLevels();
   }, []);
 
+  // Utility Functions
   const clearFilters = () => {
     setFilters({
       level: {
@@ -74,18 +111,14 @@ const Levels = () => {
 
   const handleRowClick = (index, event) => {
     event.stopPropagation();
-    setSelectedRows(prev => {
-      if (prev.includes(index)) {
-        return prev.filter(row => row !== index);
-      } else {
-        return [...prev, index];
-      }
-    });
+    setSelectedRows(prev => 
+      prev.includes(index) ? prev.filter(row => row !== index) : [...prev, index]
+    );
   };
 
   const handleActionClick = (index, event) => {
     event.stopPropagation();
-    setShowActionDropdown(prev => prev === index ? null : index);
+    setShowActionDropdown(showActionDropdown === index ? null : index);
   };
 
   const handleTabChange = (tab) => {
@@ -99,21 +132,56 @@ const Levels = () => {
     setCurrentPage(1);
   };
 
-  const handleDelete = () => {
-    const updatedData = levelsData[activeTab].filter((_, index) => !selectedRows.includes(index));
-    setLevelsData(prev => ({
-      ...prev,
-      [activeTab]: updatedData
-    }));
-    setSelectedRows([]);
+  // Delete Functions
+  const handleDelete = (levelId) => {
+    setLevelToDelete(levelId);
+    setShowDeleteOverlay(true);
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!levelToDelete) return;
+
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) throw new Error("No access token found");
+
+      const response = await fetch(
+        `https://bt-coins.onrender.com/admin/levels/delete_level/${levelToDelete}`,
+        {
+          method: "DELETE",
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to delete level");
+
+      const result = await response.json();
+      console.log(result.message);
+
+      // Update local state
+      setLevelsData(prev => ({
+        ...prev,
+        "Levels": prev["Levels"].filter(level => level.id !== levelToDelete)
+      }));
+
+      setSelectedRows([]);
+      setShowDeleteOverlay(false);
+      setLevelToDelete(null);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const handleExport = () => {
     const dataToExport = filteredData.map(level => ({
-      'Name': level.name,
-      'Badge': level.badge,
-      'Level': level.level,
-      'Requirement': level.requirement,
+      'Name': level.name || 'N/A',
+      'Badge': level.badge || 'N/A',
+      'Level': level.level || 'N/A',
+      'Requirement': level.requirement || 'N/A',
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -123,8 +191,9 @@ const Levels = () => {
   };
 
   const filteredData = levelsData[activeTab].filter(level => {
-    const levelMatch = Object.keys(filters.level).some(lvl => filters.level[lvl] && level.level.includes(lvl));
-    return (!Object.values(filters.level).includes(true) || levelMatch);
+    const levelMatch = Object.keys(filters.level).some(lvl => 
+      filters.level[lvl] && level.name?.toLowerCase().includes(lvl.toLowerCase()));
+    return (!Object.values(filters.level).some(v => v) || levelMatch);
   });
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
@@ -135,6 +204,7 @@ const Levels = () => {
       <NavigationPanel />
       <div className="main-wrapper">
         <AppBar screenName="Levels" />
+        {error && <div className="error-message">Error: {error}</div>}
         <div className="levels-body-frame">
           <div className="levels-header">
             <div className="levels-pagination">
@@ -150,10 +220,10 @@ const Levels = () => {
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button className="btn create-btn">
-                <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Level" className="btn-icon" />
-                Create Level
-              </button>
+              <button className="btn create-btn" onClick={() => setShowCreateOverlay(true)}>
+              <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Level" className="btn-icon" />
+              Create Level
+            </button>
             </div>
           </div>
 
@@ -195,7 +265,7 @@ const Levels = () => {
                 </div>
               )}
             </div>
-            <button className="btn delete-btn" onClick={handleDelete}>
+            <button className="btn delete-btn" onClick={() => handleDelete(selectedRows[0])} disabled={selectedRows.length !== 1}>
               <img src={`${process.env.PUBLIC_URL}/delete.png`} alt="Delete" className="btn-icon" />
               Delete
             </button>
@@ -218,40 +288,44 @@ const Levels = () => {
 
           <div className="levels-divider"></div>
 
-          {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((level, index) => (
-            <div
-              key={index} 
-              className={`levels-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
-              onClick={(e) => handleRowClick(index, e)}
-            >
-              <div className="table-cell radio-column">
-                <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
-              </div>
-              <div className="table-cell">{level.name}</div>
-              <div className="table-cell">{level.badge}</div>
-              <div className="table-cell">{level.level}</div>
-              <div className="table-cell reward-cell">
-                <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Requirement" className="reward-icon" />
-                {level.requirement}
-              </div>
-              <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
-                <span>Action</span>
-                <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
-                {showActionDropdown === index && (
-                  <div className="action-dropdown">
-                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Edit */ }}>
-                      <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
-                      <span>Edit</span>
+          {filteredData.length === 0 ? (
+            <div className="no-data">No levels to display</div>
+          ) : (
+            filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((level, index) => (
+              <div
+                key={level.id || index}
+                className={`levels-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
+                onClick={(e) => handleRowClick(index, e)}
+              >
+                <div className="table-cell radio-column">
+                  <div className={`custom-radio ${selectedRows.includes(index) ? "selected" : ""}`}></div>
+                </div>
+                <div className="table-cell">{decodeLevelName(level.name) || 'N/A'}</div>
+                <div className="table-cell">{level.badge || 'N/A'}</div>
+                <div className="table-cell">{level.level || 'N/A'}</div>
+                <div className="table-cell reward-cell">
+                  <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Requirement" className="reward-icon" />
+                  {level.requirement || 'N/A'}
+                </div>
+                <div className="table-cell action-cell" onClick={(e) => handleActionClick(index, e)}>
+                  <span>Action</span>
+                  <img src={`${process.env.PUBLIC_URL}/dropdown.png`} alt="Dropdown" className="dropdown-icon" />
+                  {showActionDropdown === index && (
+                    <div className="action-dropdown">
+                      <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); /* Handle Edit */ }}>
+                        <img src={`${process.env.PUBLIC_URL}/edit.png`} alt="Edit" className="action-icon" />
+                        <span>Edit</span>
+                      </div>
+                      <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); handleDelete(level.id); }}>
+                        <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
+                        <span>Delete</span>
+                      </div>
                     </div>
-                    <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
-                      <img src={`${process.env.PUBLIC_URL}/deletered.png`} alt="Delete" className="action-icon" />
-                      <span>Delete</span>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
 
           <div className="levels-divider"></div>
 
@@ -292,6 +366,46 @@ const Levels = () => {
           </div>
         </div>
       </div>
+
+      {/* Create Level Overlay */}
+      {showCreateOverlay && (
+          <CreateLevelOverlay 
+            onClose={() => setShowCreateOverlay(false)} 
+            onSubmit={(newLevel) => {
+              setLevelsData(prev => ({
+                ...prev,
+                "Levels": [...prev["Levels"], newLevel] // Add new level to state
+              }));
+            }} 
+          />
+        )}
+
+      {/* Delete Confirmation Overlay (Your Style) */}
+      {showDeleteOverlay && (
+        <div className="overlay-backdrop">
+          <div className="overlay-content">
+            <center>
+              <img
+                src={`${process.env.PUBLIC_URL}/Red Delete.png`}
+                alt="Delete Icon"
+                className="overlay-icon"
+              />
+            </center>
+            <h2>Delete?</h2>
+            <p>Are you sure to delete this level?</p>
+            <button className="overlay-submit-button" onClick={handleDeleteConfirmed}>
+              Delete
+            </button>
+            <button 
+              className="overlay-back-link" 
+              onClick={() => setShowDeleteOverlay(false)} 
+              style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
