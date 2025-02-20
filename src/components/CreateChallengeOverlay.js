@@ -34,7 +34,7 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
   });
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false); // New state to track submission
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -392,7 +392,9 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true); // Set submitting state to true
+    setIsSubmitting(true);
+    console.log('handleSubmit called');
+    console.log('Form Data:', formData);
 
     if (!validateFormData()) {
       setIsSubmitting(false);
@@ -403,8 +405,8 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
       const formDataBody = new FormData();
 
       const queryParams = new URLSearchParams({
-        name: encodeURIComponent(formData.challengeName),
-        description: encodeURIComponent(formData.challengeDescription),
+        name: formData.challengeName, // Removed encodeURIComponent as per previous fix
+        description: formData.challengeDescription,
         launch_date: formData.launchDate.toISOString().split('T')[0],
         reward: formData.challengeReward,
         duration: formatDurationForBackend(formData.challengeDuration),
@@ -428,52 +430,34 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
 
       const endpoint = isEditing ? 'update_challenge' : 'create_challenge';
       const method = isEditing ? 'PUT' : 'POST';
+      const url = `https://bt-coins.onrender.com/admin/challenge/${endpoint}?${queryParams.toString()}`;
+      console.log('Submitting to URL:', url);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-      const response = await fetch(
-        `https://bt-coins.onrender.com/admin/challenge/${endpoint}?${queryParams.toString()}`,
-        {
-          method: method,
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formDataBody,
-          signal: controller.signal,
-          mode: 'cors',
-        }
-      );
-
-      clearTimeout(timeoutId);
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formDataBody,
+        mode: 'cors',
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
-        const errorData = JSON.parse(errorText || '{}');
-        throw new Error(`Network response was not ok: ${errorData.message || errorText || 'Server error'}`);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
       const result = await response.json();
-      setShowSuccessOverlay(true); // Show success overlay explicitly
-      setError('');
-      if (onSubmit && typeof onSubmit === 'function') {
-        onSubmit(result);
-      } else {
-        console.warn('onSubmit is not a function or is undefined');
-      }
-
+      console.log('Success Response:', result);
+      setShowSuccessOverlay(true); // Set this first
+      onSubmit(result); // Call parent callback
+      console.log('showSuccessOverlay set to true');
     } catch (error) {
-      if (error.name === 'AbortError') {
-        setError('Request timed out. Please try again.');
-      } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        setError('CORS or network issue. Ensure backend allows your origin or use a proxy.');
-      } else {
-        console.error('Submission Error:', error);
-        setError(error.message);
-      }
-      alert('An error occurred while submitting the challenge: ' + (error.message || 'Unknown error'));
+      console.error('Submission Error:', error);
+      setError(error.message);
+      alert('An error occurred while submitting the challenge: ' + error.message);
     } finally {
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false);
     }
   };
 
@@ -490,13 +474,15 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
   const handleCloseSuccessOverlay = (createNew = false) => {
     setShowSuccessOverlay(false);
     if (createNew) {
-      resetForm(); // Reset form for new challenge
+      resetForm(); // Keep overlay open for new challenge
     } else {
       onClose(); // Close overlay and return to parent
     }
   };
 
   const participantTypes = ['All Users', 'Clan(s)', 'Level(s)', 'Specific User(s)'];
+
+  console.log('Rendering, showSuccessOverlay:', showSuccessOverlay);
 
   return (
     <div className="overlay-backdrop">
@@ -635,7 +621,7 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
                   <input
                     type="file"
                     accept=".jpg,.jpeg,.png"
-                    onChange={(e) => !isSubmitting && handleImageUpload(e)}
+                    onChange={handleImageUpload}
                     style={{ display: 'none' }}
                     disabled={isSubmitting}
                   />
@@ -657,24 +643,24 @@ const CreateChallengeOverlay = ({ onClose, challengeToEdit, onSubmit, isEditing 
         </form>
 
         {showSuccessOverlay && (
-          <div className="success-overlay">
-            <div className="success-content">
-              <img className="success-icon" src={`${process.env.PUBLIC_URL}/success.png`} alt="Success" />
-              <h2>Success!</h2>
-              <p>Challenge {isEditing ? 'updated' : 'created'} successfully.</p>
-              <div className="success-buttons">
-                <button className="success-proceed-button" onClick={() => handleCloseSuccessOverlay(false)}>
-                  Proceed
-                </button>
-                {!isEditing && (
-                  <button className="success-new-button" onClick={() => handleCloseSuccessOverlay(true)}>
-                    Create New
+            <div className="success-overlay">
+              <div className="success-content">
+                <img className="success-icon" src={`${process.env.PUBLIC_URL}/success.png`} alt="Success" />
+                <h2>Success!</h2>
+                <p>Challenge {isEditing ? 'updated' : 'created'} successfully.</p>
+                <div className="success-buttons">
+                  <button className="success-proceed-button" onClick={() => handleCloseSuccessOverlay(false)}>
+                    Proceed
                   </button>
-                )}
+                  {/* {!isEditing && (
+                    <button className="success-new-button" onClick={() => handleCloseSuccessOverlay(true)}>
+                      Create New
+                    </button>
+                  )} */}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   );
