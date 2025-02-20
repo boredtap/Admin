@@ -51,7 +51,6 @@ const Challenges = () => {
           return;
         }
 
-        // Fetch Ongoing Challenges
         const ongoingResponse = await fetch(
           "https://bt-coins.onrender.com/admin/challenge/get_challenges?status=ongoing",
           {
@@ -62,7 +61,6 @@ const Challenges = () => {
           }
         );
 
-        // Fetch Completed Challenges
         const completedResponse = await fetch(
           "https://bt-coins.onrender.com/admin/challenge/get_challenges?status=completed",
           {
@@ -128,15 +126,32 @@ const Challenges = () => {
   };
 
   const handleCreateChallengeSubmit = (newChallenge) => {
-    setChallengesData(prev => ({
-      ...prev,
-      [activeTab]: [...prev[activeTab], newChallenge]
-    }));
-    setShowCreateChallengeOverlay(false);
+    setChallengesData(prev => {
+      if (isEditing) {
+        // Update existing challenge
+        return {
+          ...prev,
+          [activeTab]: prev[activeTab].map(challenge =>
+            challenge.id === newChallenge.id ? newChallenge : challenge
+          )
+        };
+      } else {
+        // Add new challenge to Opened Challenges
+        return {
+          ...prev,
+          "Opened Challenges": [...prev["Opened Challenges"], newChallenge]
+        };
+      }
+    });
+    // Do NOT close the overlay here; let CreateChallengeOverlay handle it
     setSelectedChallenge(null);
   };
 
-  // Reusing date formatting function
+  const handleCreateChallenge = () => {
+    setSelectedChallenge(null); // Ensure we're creating a new challenge
+    setShowCreateChallengeOverlay(true);
+  };
+
   const formatDate = (date) => {
     if (!date) return 'DD-MM-YYYY';
     return date.toLocaleDateString('en-GB', {
@@ -146,7 +161,6 @@ const Challenges = () => {
     });
   };
 
-  // Reusing custom date picker functions
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -165,7 +179,6 @@ const Challenges = () => {
     return days;
   };
 
-  // Event handlers
   const handleDateSelect = (date) => {
     setSelectedDate(date);
     setShowDatePicker(false);
@@ -175,7 +188,6 @@ const Challenges = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1));
   };
 
-  // Custom DatePicker component
   const CustomDatePicker = () => {
     const days = getDaysInMonth(currentMonth);
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -212,7 +224,6 @@ const Challenges = () => {
     );
   };
 
-  // Filter handlers
   const handleFilterClick = (event) => {
     event.stopPropagation();
     setShowFilterDropdown(!showFilterDropdown);
@@ -243,7 +254,6 @@ const Challenges = () => {
     });
   };
 
-  // Row handlers
   const handleRowClick = (index, event) => {
     event.stopPropagation();
     setSelectedRows(prev => {
@@ -284,7 +294,6 @@ const Challenges = () => {
       if (!token) return;
 
       if (selectedChallengeId) {
-        // Deleting a single challenge from the Action Dropdown
         await fetch(`https://bt-coins.onrender.com/admin/challenge/delete_challenge/${selectedChallengeId}`, {
           method: "DELETE",
           headers: {
@@ -297,7 +306,6 @@ const Challenges = () => {
           [activeTab]: prev[activeTab].filter((challenge) => challenge.id !== selectedChallengeId),
         }));
       } else {
-        // Deleting multiple selected challenges
         const challengesToDelete = challengesData[activeTab].filter((_, index) => selectedRows.includes(index));
 
         for (const challenge of challengesToDelete) {
@@ -341,7 +349,6 @@ const Challenges = () => {
            (!Object.values(filters.reward).includes(true) || rewardMatch);
   });
 
-  // Pagination calculation
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
@@ -361,13 +368,14 @@ const Challenges = () => {
     XLSX.writeFile(workbook, 'challenges.xlsx');
   };
 
+  const isEditing = !!selectedChallenge;
+
   return (
     <div className="challenges-page">
       <NavigationPanel />
       <div className="main-wrapper">
         <AppBar screenName="Challenges" />
         <div className="challenges-body-frame">
-          {/* Pagination Section */}
           <div className="challenges-header">
             <div className="challenges-pagination">
               <span 
@@ -388,7 +396,7 @@ const Challenges = () => {
                 <img src={`${process.env.PUBLIC_URL}/download.png`} alt="Export" className="btn-icon" />
                 Export
               </button>
-              <button className="btn create-btn" onClick={() => setShowCreateChallengeOverlay(true)}>
+              <button className="btn create-btn" onClick={handleCreateChallenge}>
                 <img src={`${process.env.PUBLIC_URL}/add.png`} alt="Create Challenge" className="btn-icon" />
                 New Challenge
               </button>
@@ -397,7 +405,6 @@ const Challenges = () => {
 
           <div className="challenges-divider"></div>
 
-          {/* Search and Filter Section */}
           <div className="challenges-toolbar">
             <div className="search-bar">
               <img src={`${process.env.PUBLIC_URL}/search.png`} alt="Search" className="search-icon" />
@@ -477,7 +484,6 @@ const Challenges = () => {
 
           <div className="challenges-divider"></div>
 
-          {/* Table Header */}
           <div className="challenges-table-header">
             <div className="table-heading radio-column">
               <div className="custom-radio"></div>
@@ -495,10 +501,9 @@ const Challenges = () => {
 
           <div className="challenges-divider"></div>
 
-          {/* Table Rows */}
           {filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((challenge, index) => (
             <div
-              key={challenge.id || index} // Use challenge.id if available
+              key={challenge.id || index}
               className={`challenges-table-row ${selectedRows.includes(index) ? "selected" : ""}`}
               onClick={(e) => handleRowClick(index, e)}
             >
@@ -535,7 +540,6 @@ const Challenges = () => {
 
           <div className="challenges-divider"></div>
 
-          {/* Footer with Pagination */}
           <div className="table-footer">
             <div className="rows-per-page">
               <span>Show Result:</span>
@@ -572,20 +576,18 @@ const Challenges = () => {
             </div>
           </div>
 
-          {/* Create Challenge Overlay */}
           {showCreateChallengeOverlay && (
             <CreateChallengeOverlay
               onClose={() => {
                 setShowCreateChallengeOverlay(false);
                 setSelectedChallenge(null);
               }}
-              onSubmit={handleCreateChallengeSubmit} // Pass the handler
-              isEditing={!!selectedChallenge} // True if editing an existing challenge
-              challengeToEdit={selectedChallenge} // Pass the challenge to edit, if any
+              onSubmit={handleCreateChallengeSubmit}
+              isEditing={isEditing}
+              challengeToEdit={selectedChallenge}
             />
           )}
 
-          {/* Delete Confirmation Overlay */}
           {showDeleteOverlay && (
             <div className="overlay-backdrop">
               <div className="overlay-content">
