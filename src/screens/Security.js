@@ -110,19 +110,23 @@ const Security = () => {
   };
 
   const handleOverlaySubmit = () => {
-    const endpoint = formData.userStatus === 'Ban' ? '/api/ban-user' : '/api/suspend-user';
+    const endpoint = formData.userStatus === 'Ban' ? '/api/ban-user' : `/admin/security/suspend_user/${formData.userId}`;
     const payload = {
       userId: formData.userId,
       status: formData.userStatus,
       launchDate: formData.launchDate,
     };
-
-    fetch(endpoint, {
-      method: 'POST',
+  
+    const url = formData.userStatus === 'Ban' 
+      ? endpoint 
+      : `${endpoint}?status=suspend&end_date=${payload.launchDate.toISOString().split('T')[0]}&reason=bad%20guy`;
+  
+    fetch(url, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
       },
-      body: JSON.stringify(payload),
     })
       .then((response) => response.json())
       .then((data) => {
